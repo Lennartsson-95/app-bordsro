@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-
-import logo from "@/assets/bordsro-logga-tallrik-v2.png";
+import { Link } from '@tanstack/react-router';
+import { Onboarding } from '@/components/onboarding';
+import { useAccount } from '@/components/auth-state';
+import { Button } from '@/components/ui/button';
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,25 +27,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { user } = useAccount();
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center px-6 py-16"
-      style={{ backgroundColor: "#f5f0e8" }}
-    >
-      <img
-        src={logo}
-        alt="Bordsro"
-        width={1024}
-        height={1024}
-        className="h-auto w-[min(78vw,340px)]"
-      />
-      <p
-        className="mt-8 max-w-sm text-center text-base leading-relaxed"
-        style={{ color: "#5f7a59" }}
-      >
-        Påminnelse om nästa måltid och hur mycket du behöver äta – i portioner och
-        handmått, aldrig kalorier.
-      </p>
-    </div>
+    <main>{user ? <section className="mx-auto max-w-3xl px-6 py-16"><h1 className="font-display text-4xl">Välkommen till Bordsro</h1><Button asChild className="mt-7 h-12"><Link to="/min-profil">Till mina svar</Link></Button></section> : <Onboarding />}</main>
   );
 }

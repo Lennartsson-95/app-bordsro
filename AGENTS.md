@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Keep profile validation in a shared Zod schema and persist answers through authenticated server functions; this keeps client and server validation consistent.
+- Store initial email-signup answers in auth metadata for the profile trigger, and social-login drafts only in sessionStorage until authenticated save; confirmation and OAuth must not lose answers.
+- Use the single root account provider for auth identity updates, and the client-only authenticated layout for private profile pages; this avoids competing session listeners and SSR redirects.
