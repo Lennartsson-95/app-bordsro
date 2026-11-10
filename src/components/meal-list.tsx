@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { editMeal, updateMeal } from '@/lib/today.functions';
-import { mealEditSchema, type Meal, type MealEntry } from '@/lib/meal-plan';
+import { mealEditSchema, plannedMeals, type Meal, type MealEntry } from '@/lib/meal-plan';
+import type { ProfileAnswers } from '@/lib/profile-schema';
 import breakfastImage from '@/assets/frukost-havre.jpg';
 import lunchImage from '@/assets/lunch-linser.jpg';
 
-export function MealList({ day, meals, entries, compact = false }: { day: string; meals: Meal[]; entries: MealEntry[]; compact?: boolean }) {
+export function MealList({ day, meals, entries, profile, compact = false }: { day: string; meals: Meal[]; entries: MealEntry[]; profile: ProfileAnswers; compact?: boolean }) {
   const [selected, setSelected] = useState<Meal | null>(null);
   const [title, setTitle] = useState('');
   const [time, setTime] = useState('');
@@ -19,6 +20,7 @@ export function MealList({ day, meals, entries, compact = false }: { day: string
   const save = useServerFn(editMeal);
   const mark = useServerFn(updateMeal);
   const queryClient = useQueryClient();
+  const preview = selected ? plannedMeals(profile, [...entries.filter(e => e.slot !== selected.slot), { slot: selected.slot, choice: entries.find(e => e.slot === selected.slot)?.choice ?? 0, eaten: false, custom_title: title.trim() || null, custom_time: null }]).find(m => m.slot === selected.slot) : null;
   async function refresh() { await Promise.all([queryClient.invalidateQueries({ queryKey: ['today'] }), queryClient.invalidateQueries({ queryKey: ['week'] })]); }
   function open(meal: Meal) { setSelected(meal); setTitle(entries.find(e => e.slot === meal.slot)?.custom_title ?? ''); setTime(meal.time); setError(''); }
   async function submit(reset = false) {
@@ -58,7 +60,7 @@ export function MealList({ day, meals, entries, compact = false }: { day: string
         {selected && <><form onSubmit={e => { e.preventDefault(); void submit(); }} className="space-y-4">
           <div><label htmlFor="meal-time" className="mb-2 block text-sm font-medium">Tid för måltiden</label><Input id="meal-time" type="time" required value={time} onChange={e => setTime(e.target.value)} disabled={busy} /></div>
           <div><label htmlFor="meal-food" className="mb-2 block text-sm font-medium">Vad ska du äta?</label><Input id="meal-food" value={title} onChange={e => setTitle(e.target.value)} placeholder={selected.title} maxLength={160} disabled={busy} /></div>
-          <section className="border-y border-border py-4"><h3 className="font-display text-lg">Förslag på mängd</h3><ul className="mt-3 space-y-2 text-sm leading-relaxed">{selected.portions.map(p => <li key={p} className="flex gap-2"><span className="mt-2 size-1 shrink-0 rounded-full bg-primary" />{p}</li>)}</ul><p className="mt-3 text-xs leading-relaxed text-muted-foreground">{title.trim() || entries.find(e => e.slot === selected.slot)?.custom_title ? 'För egen mat gäller en generell portionsguide för måltiden, inte en beräkning av maträtten. ' : ''}Anpassa efter hunger och mättnad. Kontrollera alltid att maten passar dina allergier.</p></section>
+          <section className="border-y border-border py-4"><h3 className="font-display text-lg">Förslag på mängd</h3><ul className="mt-3 space-y-2 text-sm leading-relaxed">{(preview?.portions ?? selected.portions).map(p => <li key={p} className="flex gap-2"><span className="mt-2 size-1 shrink-0 rounded-full bg-primary" />{p}</li>)}</ul><p className="mt-3 text-xs leading-relaxed text-muted-foreground">{title.trim() ? 'För egen mat gäller en generell portionsguide för måltiden, inte en beräkning av maträtten. ' : ''}Anpassa efter hunger och mättnad. Kontrollera alltid att maten passar dina allergier.</p></section>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <div className="flex flex-wrap justify-between gap-2"><Button variant="ghost" type="button" disabled={busy} onClick={() => submit(true)}><RefreshCw />Återställ förslag</Button><Button type="submit" disabled={busy}><Save />{busy ? 'Sparar…' : 'Spara måltid'}</Button></div>
         </form></>}
