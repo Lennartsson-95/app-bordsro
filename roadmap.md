@@ -24,3 +24,6 @@
 - [x] Egna varor som läggs till och bockas av i inköpslistan, sparade per vecka.
 - [x] Menyn får plats på små mobilskärmar utan sidledes skroll.
 - [x] Valfri mängd för egna inköpsvaror, sparad och kontrollerad efter omladdning.
+
+# Mobil meny
+- [x] Hamburgaremeny på mobil med Idag, Vecka, Inköp, Min profil och Logga ut; knapparna visas kvar på dator.
