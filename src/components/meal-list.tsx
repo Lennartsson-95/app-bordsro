@@ -11,7 +11,7 @@ import type { ProfileAnswers } from '@/lib/profile-schema';
 import breakfastImage from '@/assets/frukost-havre.jpg';
 import lunchImage from '@/assets/lunch-linser.jpg';
 
-export function MealList({ day, meals, entries, profile, compact = false }: { day: string; meals: Meal[]; entries: MealEntry[]; profile: ProfileAnswers; compact?: boolean }) {
+export function MealList({ day, meals, entries, profile, compact = false, training = 0 }: { day: string; meals: Meal[]; entries: MealEntry[]; profile: ProfileAnswers; compact?: boolean; training?: 0 | 1 | 2 }) {
   const [selected, setSelected] = useState<Meal | null>(null);
   const [title, setTitle] = useState('');
   const [time, setTime] = useState('');
@@ -20,7 +20,7 @@ export function MealList({ day, meals, entries, profile, compact = false }: { da
   const save = useServerFn(editMeal);
   const mark = useServerFn(updateMeal);
   const queryClient = useQueryClient();
-  const preview = selected ? plannedMeals(profile, [...entries.filter(e => e.slot !== selected.slot), { slot: selected.slot, choice: entries.find(e => e.slot === selected.slot)?.choice ?? 0, eaten: false, custom_title: title.trim() || null, custom_time: null }]).find(m => m.slot === selected.slot) : null;
+  const preview = selected ? plannedMeals(profile, [...entries.filter(e => e.slot !== selected.slot), { slot: selected.slot, choice: entries.find(e => e.slot === selected.slot)?.choice ?? 0, eaten: false, custom_title: title.trim() || null, custom_time: null }], training).find(m => m.slot === selected.slot) : null;
   async function refresh() { await Promise.all([queryClient.invalidateQueries({ queryKey: ['today'] }), queryClient.invalidateQueries({ queryKey: ['week'] })]); }
   function open(meal: Meal) { setSelected(meal); setTitle(entries.find(e => e.slot === meal.slot)?.custom_title ?? ''); setTime(meal.time); setError(''); }
   async function submit(reset = false) {

@@ -60,11 +60,14 @@ export type Database = {
           diet: string
           display_name: string
           goal: string | null
+          height_cm: number | null
           id: string
           reminder_lead: number
           reminders_enabled: boolean
           sleep_time: string
+          target_weight_kg: number | null
           wake_time: string
+          weight_kg: number | null
         }
         Insert: {
           activity?: string
@@ -73,11 +76,14 @@ export type Database = {
           diet?: string
           display_name?: string
           goal?: string | null
+          height_cm?: number | null
           id: string
           reminder_lead?: number
           reminders_enabled?: boolean
           sleep_time?: string
+          target_weight_kg?: number | null
           wake_time?: string
+          weight_kg?: number | null
         }
         Update: {
           activity?: string
@@ -86,13 +92,54 @@ export type Database = {
           diet?: string
           display_name?: string
           goal?: string | null
+          height_cm?: number | null
           id?: string
           reminder_lead?: number
           reminders_enabled?: boolean
           sleep_time?: string
+          target_weight_kg?: number | null
           wake_time?: string
+          weight_kg?: number | null
         }
         Relationships: []
+      }
+      workouts: {
+        Row: {
+          created_at: string
+          day: string
+          id: string
+          intensity: string
+          kind: string
+          minutes: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          id?: string
+          intensity: string
+          kind: string
+          minutes: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          id?: string
+          intensity?: string
+          kind?: string
+          minutes?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workouts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

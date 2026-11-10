@@ -29,6 +29,13 @@
       "when": 1794303551099,
       "tag": "0003_meal_planning_details",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794304637146,
+      "tag": "0004_body_and_workouts",
+      "breakpoints": true
     }
   ]
 }

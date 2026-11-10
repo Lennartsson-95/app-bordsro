@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { pageHead } from '@/lib/page-head';
 import { getToday, updateReminders } from '@/lib/today.functions';
 import { plannedMeals, dueReminders, localDay, minutes, type MealSlot } from '@/lib/meal-plan';
-import { goalChoices, profileSchema } from '@/lib/profile-schema';
+import { goalChoices, profileSchema, trainingLevel } from '@/lib/profile-schema';
 import { MealList } from '@/components/meal-list';
+import { WorkoutPanel } from '@/components/workout-panel';
 
 const todayQuery = (day: string) => queryOptions({ queryKey: ['today',day], queryFn: () => getToday({ data: { day } }) });
 export const Route = createFileRoute('/_authenticated/idag')({
@@ -29,7 +30,8 @@ function TodayPage() {
   const [reminder, setReminder] = useState<{ label: string; title: string } | null>(null);
   const reminded = useRef(new Set<string>());
   const profile = profileSchema.safeParse(data.profile);
-  const meals = profile.success ? plannedMeals(profile.data, data.meals) : [];
+  const training = trainingLevel(data.workouts);
+  const meals = profile.success ? plannedMeals(profile.data, data.meals, training) : [];
   const eaten = new Set(data.meals.filter(m=>m.eaten).map(m=>m.slot as MealSlot));
   const next = meals.find(m => !eaten.has(m.slot) && m.offset >= now.getHours()*60+now.getMinutes()) ?? meals.find(m=>!eaten.has(m.slot));
   useEffect(() => { const timer = window.setInterval(()=>setNow(new Date()),15000); return ()=>window.clearInterval(timer); }, []);
@@ -59,11 +61,12 @@ function TodayPage() {
     <div className="mt-9 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
       <div>
         <section className="flex flex-wrap items-center justify-between gap-5 border-y border-border py-5"><div className="flex items-center gap-3"><span className="flex size-11 items-center justify-center rounded-full bg-secondary text-primary"><Utensils className="size-5" /></span><div><p className="font-medium">{next ? `Nästa måltid · ${next.time}` : 'Dagens måltider är avbockade'}</p><p className="mt-1 text-sm text-muted-foreground">{next?.label ?? 'Ta en lugn stund för dig själv.'}</p></div></div><div className="flex items-center gap-2 text-sm text-primary"><Check className="size-4" />{eaten.size} av {meals.length} måltider</div></section>
-        <div className="mt-8"><MealList day={day} meals={meals} entries={data.meals} profile={profile.data} /></div>
+        <div className="mt-8"><MealList day={day} meals={meals} entries={data.meals} profile={profile.data} training={training} /></div>
       </div>
       <aside className="space-y-8 lg:sticky lg:top-6">
+        <WorkoutPanel day={day} workouts={data.workouts} />
         <section className="border-y border-border py-6"><div className="flex items-center justify-between gap-4"><h2 className="flex items-center gap-2 font-display text-xl"><Bell className="size-5 text-primary" />Påminnelser</h2><Switch aria-label="Aktivera måltidspåminnelser" checked={data.profile.reminders_enabled} disabled={busy!==null} onCheckedChange={v=>settings(v,data.profile.reminder_lead as 0|5|15)} /></div><p className="mb-4 mt-3 text-sm leading-relaxed text-muted-foreground">Påminnelser visas här medan Idag-sidan är öppen. De kommer inte när appen är stängd.</p><label className="mb-2 block text-xs font-medium" id="reminder-lead-label">När vill du bli påmind?</label><Select value={String(data.profile.reminder_lead)} disabled={busy!==null} onValueChange={v=>{ const lead=Number(v); if (lead===0 || lead===5 || lead===15) void settings(data.profile.reminders_enabled,lead); }}><SelectTrigger aria-labelledby="reminder-lead-label"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0">Vid måltiden</SelectItem><SelectItem value="5">5 minuter innan</SelectItem><SelectItem value="15">15 minuter innan</SelectItem></SelectContent></Select><Button variant="outline" className="mt-4 w-full" onClick={()=>setReminder({label:'måltiden',title:'En lugn stund att äta något gott.'})}><BellRing />Testa påminnelse</Button></section>
-        <section><h2 className="font-display text-xl">Lagom för dig</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Handmåtten är en startpunkt. Anpassa mängden efter hunger, mättnad och hur du mår.</p><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{profile.data.goal==='gain' ? 'Ditt förslag innehåller större portioner och ett extra kvällsmål.' : profile.data.activity==='high' ? 'Din aktiva vardag ger lite större portioner av ris och potatis.' : 'En jämn måltidsrytm ger plats för både huvudmål och mellanmål.'}</p></section>
+        <section><h2 className="font-display text-xl">Lagom för dig</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Handmåtten är en startpunkt. Anpassa mängden efter hunger, mättnad och hur du mår.</p><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{training ? (training===2 ? 'Du har tränat idag – lunch och middag har lite mer ris eller potatis, och mellanmålet har en extra smörgås.' : 'Du har rört på dig idag – mellanmålet har en extra frukt.') : profile.data.goal==='gain' ? 'Ditt förslag innehåller större portioner och ett extra kvällsmål.' : profile.data.activity==='high' ? 'Din aktiva vardag ger lite större portioner av ris och potatis.' : 'En jämn måltidsrytm ger plats för både huvudmål och mellanmål.'}</p></section>
         <section className="border-t border-border pt-6"><h2 className="font-display text-xl">Allergier & omtanke</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{data.profile.allergies ? `Du har angett: ${data.profile.allergies}. ` : ''}Förslagen är inte allergisäkrade. Kontrollera ingredienser och välj det du tål.</p><p className="mt-3 text-xs leading-relaxed text-muted-foreground">Vid sjukdom, ofrivillig viktförändring eller svårigheter med mat: prata med vården eller en dietist.</p></section>
       </aside>
     </div>
