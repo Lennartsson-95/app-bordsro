@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMealPlan, dueReminders, localDay, plannedMeals, weekDays, mealEditSchema } from '@/lib/meal-plan';
+import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, weekDays, mealEditSchema } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
   it('uses the selected meal time and own food with a profile-based portion guide', () => {
@@ -46,6 +46,14 @@ describe('Meal suggestions', () => {
   });
   it('suggests more food for a larger body', () => {
     expect(createMealPlan({ ...initialAnswers, weight_kg: 95, height_cm: 180 })[2]?.portions[1]).toBe('2 kupade händer ris');
+  });
+  it('offers several dishes to choose between for every meal', () => {
+    const options = dishOptions(initialAnswers);
+    for (const dishes of Object.values(options)) expect(dishes.length).toBeGreaterThanOrEqual(3);
+  });
+  it('uses the dish the user picked from the suggestions', () => {
+    expect(createMealPlan(initialAnswers, { lunch: 2 }).find(m => m.slot === 'lunch')?.title).toBe('Pastasallad med kyckling');
+    expect(createMealPlan({ ...initialAnswers, diet: 'vegan' }, { dinner: 1 }).find(m => m.slot === 'dinner')?.title).toBe('Grönsaksris med bönor');
   });
   it('keeps local dates instead of UTC dates', () => {
     expect(localDay(new Date(2026,10,10,0,1))).toBe('2026-11-10');
