@@ -36,4 +36,5 @@ use the editor.
 - Keep protein-category suggestions in the shared meal-plan module and append new dishes without renumbering persisted choices; this preserves existing plans and shopping ingredients.
 - Use one shared meal editor for Today and Week so time and food edits use the same authenticated save path and portion rules.
 - Keep meal reminders in the open Today page, persisted as profile preferences with local-clock scheduling; background push is not enabled and must not be implied.
+- Select appetite tips in a pure meal-slot module with date-based rotation; scheduled and test reminders must use the same selection.
 - Keep optional own-item shopping quantities separate from item names and validate them through a shared schema; quantities must not change deduplication or check-off identity.
