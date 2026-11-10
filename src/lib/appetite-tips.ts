@@ -7,22 +7,22 @@ const alternatives: Record<MealSlot, AppetiteAlternative> = {
 };
 const tips: Record<AppetiteAlternative, readonly string[]> = {
   'protein-drink': [
-    'Om frukosten känns svår kan du prova en proteindryck och en banan, i din egen takt.',
-    'Liten aptit på morgonen? Börja med en proteindryck och ta en liten smörgås när det känns lättare.',
-    'Prova en proteindryck till frukost och något litet vid sidan om, till exempel frukt eller rostat bröd.',
+    'Om du saknar aptit eller inte orkar äta frukosten kan en proteindryck vara ett alternativ. Ät gärna något litet till om du orkar.',
+    'Om du inte har aptit på morgonen kan du ta en proteindryck istället för frukosten och äta något när det känns lättare.',
+    'Om du inte orkar äta frukosten kan du prova en proteindryck. Ta gärna lite frukt eller rostat bröd till om det går.',
   ],
   drink: [
-    'Om du inte är hungrig kan ett glas mjölk eller berikad sojadryck vara ett lättare mellanmål.',
+    'Om du saknar aptit eller inte orkar äta mellanmålet kan ett glas mjölk eller berikad sojadryck vara ett alternativ.',
     'Svårt att äta mellanmål? Prova drickyoghurt eller ett växtbaserat alternativ.',
     'Prova en liten banandryck med mjölk eller berikad sojadryck när ett mellanmål känns svårt.',
   ],
   smoothie: [
-    'Om maten känns svår kan du prova en smoothie med banan, havre och yoghurt eller ett växtbaserat alternativ.',
-    'Liten aptit? Prova en smoothie med bär, banan och mjölk eller berikad sojadryck. Ta gärna en liten smörgås till.',
-    'Börja med en smoothie om det känns lättare än en hel måltid. Ät gärna lite av maten senare när aptiten kommer.',
+    'Om du saknar aptit eller inte orkar äta måltiden kan en smoothie med banan, havre och yoghurt eller ett växtbaserat alternativ vara ett alternativ.',
+    'Om du inte har aptit kan du ta en smoothie med bär, banan och mjölk eller berikad sojadryck istället. Ät gärna något litet till om du orkar.',
+    'Om du saknar aptit eller inte orkar äta kan du ta en smoothie istället för måltiden. Ät gärna lite av maten senare när aptiten kommer.',
   ],
   'small-evening-meal': [
-    'Ett litet kvällsmål räcker som start: prova varm mjölk eller berikad sojadryck och en liten smörgås.',
+    'Om du inte orkar äta kvällsmålet kan varm mjölk eller berikad sojadryck vara ett alternativ. Ta gärna en liten smörgås till om du orkar.',
     'Liten aptit på kvällen? Prova lite yoghurt eller ett växtbaserat alternativ med mjuk frukt.',
     'Om kvällsmålet känns svårt kan du prova drickyoghurt och ta något litet att äta när det känns lättare.',
   ],
