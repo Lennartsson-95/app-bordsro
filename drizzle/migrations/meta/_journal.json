@@ -22,6 +22,13 @@
       "when": 1794302223007,
       "tag": "0002_daily_meals_and_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794303551099,
+      "tag": "0003_meal_planning_details",
+      "breakpoints": true
     }
   ]
 }

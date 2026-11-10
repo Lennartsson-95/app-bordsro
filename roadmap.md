@@ -10,3 +10,9 @@
 - [x] Spara uppätna måltider och valda alternativ per dag.
 - [x] Påminnelser på öppen sida med valbar framförhållning.
 - [x] Länka Idag och kontrollera inloggat flöde på dator och mobil.
+# Veckoplanering och måltidsval
+- [ ] Klickbara måltider med dolda portionsförslag.
+- [ ] Egna maträtter och ändrade tider sparade per datum.
+- [ ] Planera och se sju dagar.
+- [ ] Påminnelser utanför appen (kräver ansluten push-tjänst).
+- [ ] Testa sparade val på dator och mobil.

@@ -1,0 +1,2 @@
+ALTER TABLE public.daily_meals ADD COLUMN custom_title text, ADD COLUMN custom_time text;
+ALTER TABLE public.daily_meals ADD CONSTRAINT daily_meals_title_length CHECK (custom_title IS NULL OR length(custom_title) <= 160), ADD CONSTRAINT daily_meals_time_format CHECK (custom_time IS NULL OR custom_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
