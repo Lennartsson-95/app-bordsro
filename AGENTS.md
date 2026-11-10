@@ -32,3 +32,5 @@ use the editor.
 - Keep profile validation in a shared Zod schema and persist answers through authenticated server functions; this keeps client and server validation consistent.
 - Store initial email-signup answers in auth metadata for the profile trigger, and social-login drafts only in sessionStorage until authenticated save; confirmation and OAuth must not lose answers.
 - Use the single root account provider for auth identity updates, and the client-only authenticated layout for private profile pages; this avoids competing session listeners and SSR redirects.
+- Generate daily meal suggestions with a shared pure meal-plan module and store only per-user/date selections and eaten flags; this avoids demo-row seeding and allows deterministic portion tests.
+- Keep meal reminders in the open Today page, persisted as profile preferences with local-clock scheduling; background push is not enabled and must not be implied.

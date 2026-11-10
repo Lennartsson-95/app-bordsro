@@ -29,6 +29,6 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { user } = useAccount();
   return (
-    <main>{user ? <section className="mx-auto max-w-3xl px-6 py-16"><h1 className="font-display text-4xl">Välkommen till Bordsro</h1><Button asChild className="mt-7 h-12"><Link to="/min-profil">Till mina svar</Link></Button></section> : <Onboarding />}</main>
+    <main>{user ? <section className="mx-auto max-w-3xl px-6 py-16"><h1 className="font-display text-4xl">Välkommen till Bordsro</h1><Button asChild className="mt-7 h-12"><Link to="/idag">Till dagens måltider</Link></Button></section> : <Onboarding />}</main>
   );
 }
