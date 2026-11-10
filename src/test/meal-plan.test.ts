@@ -40,6 +40,13 @@ describe('Meal suggestions', () => {
     expect(dueReminders(meals,new Set(),first.offset-15,15).map(m=>m.slot)).toEqual(['breakfast']);
     expect(dueReminders(meals,new Set(),first.offset-20,15)).toHaveLength(0);
   });
+  it('suggests more food on a hard training day', () => {
+    expect(createMealPlan(initialAnswers, {}, 2)[2]?.portions[1]).toBe('2 kupade händer ris');
+    expect(createMealPlan(initialAnswers, {}, 1)[3]?.portions).toContain('Träningsdag: + 1 extra frukt');
+  });
+  it('suggests more food for a larger body', () => {
+    expect(createMealPlan({ ...initialAnswers, weight_kg: 95, height_cm: 180 })[2]?.portions[1]).toBe('2 kupade händer ris');
+  });
   it('keeps local dates instead of UTC dates', () => {
     expect(localDay(new Date(2026,10,10,0,1))).toBe('2026-11-10');
   });
