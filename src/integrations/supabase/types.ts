@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           added: boolean
           choice: number
+          chosen: boolean
           custom_time: string | null
           custom_title: string | null
           day: string
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           added?: boolean
           choice?: number
+          chosen?: boolean
           custom_time?: string | null
           custom_title?: string | null
           day: string
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           added?: boolean
           choice?: number
+          chosen?: boolean
           custom_time?: string | null
           custom_title?: string | null
           day?: string

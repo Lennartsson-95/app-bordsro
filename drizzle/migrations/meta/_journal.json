@@ -78,6 +78,13 @@
       "when": 1794316729427,
       "tag": "0010_daily_meals_added",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794317508527,
+      "tag": "0011_daily_meals_chosen",
+      "breakpoints": true
     }
   ]
 }
