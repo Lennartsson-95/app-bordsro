@@ -79,3 +79,27 @@ export const toggleShoppingCheck = createServerFn({ method: 'POST' }).middleware
     if (res.error) throw new Error('Kunde inte spara. Försök igen.');
     return { saved: true };
   });
+export const getShoppingItems = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ week: daySchema }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { data: rows, error } = await context.supabase.from('shopping_items').select('item').eq('user_id', context.userId).eq('week_start', data.week).order('created_at');
+    if (error) throw new Error('Dina egna varor kunde inte hämtas.');
+    return rows.map(r => r.item);
+  });
+export const addShoppingItem = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ week: daySchema, item: z.string().trim().min(1).max(120) }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from('shopping_items').upsert({ user_id: context.userId, week_start: data.week, item: data.item }, { onConflict: 'user_id,week_start,item', ignoreDuplicates: true });
+    if (error) throw new Error('Varan kunde inte läggas till. Försök igen.');
+    return { saved: true };
+  });
+export const removeShoppingItem = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ week: daySchema, item: z.string().trim().min(1).max(120) }).parse(input))
+  .handler(async ({ context, data }) => {
+    const [item, check] = await Promise.all([
+      context.supabase.from('shopping_items').delete().eq('user_id', context.userId).eq('week_start', data.week).eq('item', data.item),
+      context.supabase.from('shopping_checks').delete().eq('user_id', context.userId).eq('week_start', data.week).eq('item', data.item),
+    ]);
+    if (item.error || check.error) throw new Error('Varan kunde inte tas bort. Försök igen.');
+    return { removed: true };
+  });

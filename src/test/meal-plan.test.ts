@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, weekDays, mealEditSchema } from '@/lib/meal-plan';
+import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, prepareOwnItem, weekDays, mealEditSchema } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
   it('uses the selected meal time and own food with a profile-based portion guide', () => {
@@ -65,5 +65,10 @@ describe('inköpslista', () => {
     const r = _sl([m('Ris, kyckling'), m('ris, olja'), m('', 'Tacos')]);
     expect(r.items).toEqual([{ name: 'Kyckling', count: 1 }, { name: 'Olja', count: 1 }, { name: 'Ris', count: 2 }]);
     expect(r.custom).toEqual(['Tacos']);
+  });
+  it('renserar en egen vara och stoppar duplikater', () => {
+    expect(prepareOwnItem('  ris   och  gryn ', [])).toEqual({ item: 'ris och gryn', duplicate: false });
+    expect(prepareOwnItem('Ris', ['ris', 'olja'])).toEqual({ item: 'Ris', duplicate: true });
+    expect(prepareOwnItem('   ', []).item).toBe('');
   });
 });

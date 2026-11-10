@@ -106,6 +106,11 @@ function veganDrink(profile: ProfileAnswers) { return profile.diet === 'vegan' ?
 export function dueReminders(meals: Meal[], eaten: Set<MealSlot>, nowMinutes: number, lead: number) {
   return meals.filter(meal => !eaten.has(meal.slot) && nowMinutes >= meal.offset - lead && nowMinutes < meal.offset - lead + 2);
 }
+/** Normalizes a shopping item the user types in and reports whether it is already on the list. */
+export function prepareOwnItem(name: string, existing: string[]) {
+  const item = name.trim().replace(/\s+/g, ' ').slice(0, 120);
+  return { item, duplicate: existing.some(e => e.toLowerCase() === item.toLowerCase()) };
+}
 export type ShoppingItem = { name: string; count: number };
 /** Collects unique ingredients from planned meals; custom dishes without ingredients are listed by name. */
 export function shoppingList(meals: Meal[]): { items: ShoppingItem[]; custom: string[] } {

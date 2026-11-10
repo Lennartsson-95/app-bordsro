@@ -19,3 +19,5 @@
 # Fler matförslag
 - [x] Flera rätter att välja mellan för varje måltid, sparade per dag.
 - [x] Inköpslista från veckoplanen med avbockning.
+- [x] Egna varor som läggs till och bockas av i inköpslistan, sparade per vecka.
+- [x] Menyn får plats på små mobilskärmar utan sidledes skroll.
