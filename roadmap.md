@@ -18,3 +18,4 @@
 - [x] Testa sparade val på dator och mobil.
 # Fler matförslag
 - [x] Flera rätter att välja mellan för varje måltid, sparade per dag.
+- [x] Inköpslista från veckoplanen med avbockning.
