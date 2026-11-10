@@ -10,7 +10,8 @@ export function clock(total: number) { const normalized = ((Math.round(total) % 
 export type Meal = { slot: MealSlot; label: string; time: string; offset: number; title: string; ingredients: string; portions: string[]; image: 'breakfast' | 'lunch' | null };
 export type MealEntry = { slot: string; choice: number; eaten: boolean; custom_title: string | null; custom_time: string | null };
 export const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Välj en giltig tid.');
-export const mealEditSchema = z.object({ day: daySchema, slot: slotSchema, custom_title: z.string().trim().max(160, 'Använd högst 160 tecken.').nullable(), custom_time: timeSchema.nullable(), choice: z.number().int().min(0).max(9).optional() });
+export const mealChoiceSchema = z.number().int().min(0).max(10);
+export const mealEditSchema = z.object({ day: daySchema, slot: slotSchema, custom_title: z.string().trim().max(160, 'Använd högst 160 tecken.').nullable(), custom_time: timeSchema.nullable(), choice: mealChoiceSchema.optional() });
 export function weekDays(day: string) {
   const date = new Date(`${day}T12:00:00`);
   date.setDate(date.getDate() - (date.getDay() + 6) % 7);
@@ -73,6 +74,11 @@ export function dishOptions(profile: ProfileAnswers): Record<MealSlot, Dish[]> {
       { title: `Ris med ${protein} & grönsaker`, ingredients: `Ris, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'ris' },
       { title: `Pastasallad med ${protein}`, ingredients: `Pasta, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'pasta' },
       ...variedLunches,
+      ...(fish ? [{ title: 'Torsk med ris & ärtor', ingredients: 'Torsk, ris, ärtor, morot, olja', image: null, proteinPart: 'torsk', carbPart: 'ris' } satisfies Dish] : []),
+      ...(profile.diet === 'mixed' ? [
+        { title: 'Köttbullar med potatis & ärtor', ingredients: 'Nötfärs, potatis, ärtor, morot, olja', image: null, proteinPart: 'köttbullar', carbPart: 'potatis' },
+        { title: 'Köttfärssås med pasta', ingredients: 'Nötfärs, pasta, tomat, morot, olja', image: null, proteinPart: 'köttfärssås', carbPart: 'pasta' },
+      ] satisfies Dish[] : []),
     ],
     snack2: snacks,
     dinner: [
@@ -80,9 +86,27 @@ export function dishOptions(profile: ProfileAnswers): Record<MealSlot, Dish[]> {
       { title: `Grönsaksris med ${protein}`, ingredients: `Ris, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'ris' },
       { title: `Gryta med ${protein} & potatis`, ingredients: `${protein}, potatis, rotfrukter, tomat`, image: null, proteinPart: protein, carbPart: 'potatis' },
       ...variedDinners,
+      ...(fish ? [{ title: 'Lax med ris & broccoli', ingredients: 'Lax, ris, broccoli, olja', image: null, proteinPart: 'lax', carbPart: 'ris' } satisfies Dish] : []),
+      ...(profile.diet === 'mixed' ? [{ title: 'Köttfärsgryta med ris', ingredients: 'Nötfärs, ris, tomat, paprika, olja', image: null, proteinPart: 'köttfärs', carbPart: 'ris' } satisfies Dish] : []),
     ],
     evening: snacks,
   };
+}
+export type ProteinCategory = 'vegetarian' | 'fish' | 'meat' | 'chicken';
+export type ProteinGroup = { category: ProteinCategory; label: string; dishes: { dish: Dish; choice: number }[] };
+/** Keep persisted dish indices stable; category filtering never renumbers choices. */
+export function proteinGroups(profile: ProfileAnswers, slot: MealSlot): ProteinGroup[] {
+  if (slot !== 'lunch' && slot !== 'dinner') return [];
+  const dishes = dishOptions(profile)[slot];
+  const groups: { category: ProteinCategory; label: string; indices: number[] }[] = [
+    { category: 'vegetarian', label: profile.diet === 'vegan' ? 'Veganskt' : 'Vegetariskt', indices: slot === 'lunch' ? [0, 3] : [3, 4] },
+  ];
+  if (profile.diet === 'mixed' || profile.diet === 'pescatarian') groups.push({ category: 'fish', label: 'Fisk', indices: [5, 8] });
+  if (profile.diet === 'mixed') groups.push(
+    { category: 'meat', label: 'Kött', indices: slot === 'lunch' ? [9, 10] : [7, 9] },
+    { category: 'chicken', label: 'Kyckling', indices: slot === 'lunch' ? [1, 2] : [0, 1] },
+  );
+  return groups.map(({ indices, ...group }) => ({ ...group, dishes: indices.flatMap(choice => { const dish = dishes[choice]; return dish ? [{ dish, choice }] : []; }) }));
 }
 export function plannedMeals(profile: ProfileAnswers, entries: MealEntry[], training: Training = 0): Meal[] {
   return createMealPlan(profile, Object.fromEntries(entries.map(entry => [entry.slot, entry.choice])), training).map(meal => {

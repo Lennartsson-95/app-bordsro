@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { workoutSchema } from './profile-schema';
-import { daySchema, slotSchema, mealEditSchema } from './meal-plan';
+import { daySchema, slotSchema, mealEditSchema, mealChoiceSchema } from './meal-plan';
 import { ownShoppingItemSchema } from './shopping-schema';
 
 export const getToday = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth])
@@ -17,7 +17,7 @@ export const getToday = createServerFn({ method: 'GET' }).middleware([requireSup
     return { profile: profile.data, meals: meals.data, workouts: workouts.data };
   });
 export const updateMeal = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ day: daySchema, slot: slotSchema, eaten: z.boolean().optional(), choice: z.number().int().min(0).max(9).optional() }).refine(v => v.eaten !== undefined || v.choice !== undefined).parse(input))
+  .inputValidator((input: unknown) => z.object({ day: daySchema, slot: slotSchema, eaten: z.boolean().optional(), choice: mealChoiceSchema.optional() }).refine(v => v.eaten !== undefined || v.choice !== undefined).parse(input))
   .handler(async ({ context, data }) => {
     const { day, slot } = data;
     const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, day, slot, ...(data.eaten !== undefined ? { eaten: data.eaten } : {}), ...(data.choice !== undefined ? { choice: data.choice } : {}) }, { onConflict: 'user_id,day,slot', defaultToNull: false });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, prepareOwnItem, weekDays, mealEditSchema } from '@/lib/meal-plan';
+import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, prepareOwnItem, weekDays, mealEditSchema, proteinGroups } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
   it('uses the selected meal time and own food with a profile-based portion guide', () => {
@@ -53,10 +53,10 @@ describe('Meal suggestions', () => {
   });
   it('offers varied protein sources for lunch and dinner', () => {
     const options = dishOptions(initialAnswers);
-    expect(options.lunch).toHaveLength(8);
-    expect(options.dinner).toHaveLength(8);
-    expect(options.lunch.map(d => d.proteinPart)).toEqual(['linser', 'kyckling', 'kyckling', 'tofu', 'kikärtor', 'lax', 'omelett', 'kalkon']);
-    expect(options.dinner.map(d => d.proteinPart)).toEqual(['kyckling', 'kyckling', 'kyckling', 'tofu', 'kikärtor', 'torsk', 'halloumi', 'köttbullar']);
+    expect(options.lunch).toHaveLength(11);
+    expect(options.dinner).toHaveLength(10);
+    expect(options.lunch.slice(0, 8).map(d => d.proteinPart)).toEqual(['linser', 'kyckling', 'kyckling', 'tofu', 'kikärtor', 'lax', 'omelett', 'kalkon']);
+    expect(options.dinner.slice(0, 8).map(d => d.proteinPart)).toEqual(['kyckling', 'kyckling', 'kyckling', 'tofu', 'kikärtor', 'torsk', 'halloumi', 'köttbullar']);
   });
   it('keeps the expanded suggestions compatible with each diet', () => {
     for (const diet of ['vegan', 'vegetarian', 'pescatarian'] as const) {
@@ -80,6 +80,30 @@ describe('Meal suggestions', () => {
   });
   it('keeps local dates instead of UTC dates', () => {
     expect(localDay(new Date(2026,10,10,0,1))).toBe('2026-11-10');
+  });
+  it('offers exactly two dishes per vegetarian, fish, meat and chicken category', () => {
+    for (const slot of ['lunch', 'dinner'] as const) {
+      const groups = proteinGroups(initialAnswers, slot);
+      expect(groups.map(g => g.category)).toEqual(['vegetarian', 'fish', 'meat', 'chicken']);
+      for (const group of groups) expect(group.dishes).toHaveLength(2);
+      expect(groups.find(g => g.category === 'fish')?.dishes.map(d => d.dish.proteinPart).sort()).toEqual(['lax', 'torsk']);
+      expect(groups.find(g => g.category === 'chicken')?.dishes.map(d => d.dish.proteinPart)).toEqual(['kyckling', 'kyckling']);
+    }
+  });
+  it('only offers protein categories allowed by the profile diet', () => {
+    for (const slot of ['lunch', 'dinner'] as const) {
+      expect(proteinGroups({ ...initialAnswers, diet: 'vegan' }, slot).map(g => g.category)).toEqual(['vegetarian']);
+      expect(proteinGroups({ ...initialAnswers, diet: 'vegetarian' }, slot).map(g => g.category)).toEqual(['vegetarian']);
+      expect(proteinGroups({ ...initialAnswers, diet: 'pescatarian' }, slot).map(g => g.category)).toEqual(['vegetarian', 'fish']);
+    }
+  });
+  it('uses original dish indices when saving a category suggestion', () => {
+    const choice = proteinGroups(initialAnswers, 'lunch').find(g => g.category === 'meat')?.dishes[1]?.choice;
+    expect(choice).toBe(10);
+    const input = { day: '2026-11-10', slot: 'lunch', choice, custom_title: null, custom_time: null };
+    expect(mealEditSchema.safeParse(input).success).toBe(true);
+    expect(mealEditSchema.safeParse({ ...input, choice: 11 }).success).toBe(false);
+    expect(plannedMeals(initialAnswers, [{ slot: 'lunch', choice: choice ?? -1, eaten: false, custom_title: null, custom_time: null }]).find(m => m.slot === 'lunch')?.title).toBe('Köttfärssås med pasta');
   });
 });import { shoppingList as _sl } from '@/lib/meal-plan';
 describe('inköpslista', () => {

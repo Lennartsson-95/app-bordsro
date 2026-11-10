@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, ChevronRight, Clock, RefreshCw, Save, Utensils } from 'lucide-react';
+import { Beef, Check, ChevronRight, Clock, Drumstick, Fish, Leaf, RefreshCw, Save, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { editMeal, updateMeal } from '@/lib/today.functions';
-import { dishOptions, mealEditSchema, plannedMeals, type Meal, type MealEntry } from '@/lib/meal-plan';
+import { dishOptions, mealEditSchema, plannedMeals, proteinGroups, type ProteinCategory, type Meal, type MealEntry } from '@/lib/meal-plan';
 import type { ProfileAnswers } from '@/lib/profile-schema';
 import breakfastImage from '@/assets/frukost-havre.jpg';
 import lunchImage from '@/assets/lunch-linser.jpg';
@@ -16,14 +16,18 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   const [title, setTitle] = useState('');
   const [time, setTime] = useState('');
   const [choice, setChoice] = useState(0);
+  const [protein, setProtein] = useState<ProteinCategory | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const save = useServerFn(editMeal);
   const mark = useServerFn(updateMeal);
   const queryClient = useQueryClient();
+  const groups = selected ? proteinGroups(profile, selected.slot) : [];
+  const suggestions = selected ? groups.length ? groups.find(group => group.category === protein)?.dishes ?? [] : dishOptions(profile)[selected.slot].map((dish, choice) => ({ dish, choice })) : [];
+  const proteinIcons = { vegetarian: Leaf, fish: Fish, meat: Beef, chicken: Drumstick };
   const preview = selected ? plannedMeals(profile, [...entries.filter(e => e.slot !== selected.slot), { slot: selected.slot, choice: entries.find(e => e.slot === selected.slot)?.choice ?? 0, eaten: false, custom_title: title.trim() || null, custom_time: null }], training).find(m => m.slot === selected.slot) : null;
   async function refresh() { await Promise.all([queryClient.invalidateQueries({ queryKey: ['today'] }), queryClient.invalidateQueries({ queryKey: ['week'] })]); }
-  function open(meal: Meal) { setSelected(meal); const entry = entries.find(e => e.slot === meal.slot); setTitle(entry?.custom_title ?? ''); setTime(meal.time); setChoice(entry?.choice ?? 0); setError(''); }
+  function open(meal: Meal) { setSelected(meal); const entry = entries.find(e => e.slot === meal.slot); setTitle(entry?.custom_title ?? ''); setTime(meal.time); setChoice(entry?.choice ?? 0); setProtein(null); setError(''); }
   async function choose(index: number) {
     if (!selected) return;
     setChoice(index); setTitle(''); setBusy(true); setError('');
@@ -68,10 +72,11 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
         {selected && <><form onSubmit={e => { e.preventDefault(); void submit(); }} className="space-y-4">
           <div><label htmlFor="meal-time" className="mb-2 block text-sm font-medium">Tid för måltiden</label><Input id="meal-time" type="time" required value={time} onChange={e => setTime(e.target.value)} disabled={busy} /></div>
           <div><label htmlFor="meal-food" className="mb-2 block text-sm font-medium">Vad ska du äta?</label><Input id="meal-food" value={title} onChange={e => setTitle(e.target.value)} placeholder={selected.title} maxLength={160} disabled={busy} /></div>
-          <section><h3 className="font-display text-lg">Välj ett annat förslag</h3><div className="mt-3 space-y-2">{dishOptions(profile)[selected.slot].map((dish, index) => {
+          {groups.length > 0 && <section><h3 className="font-display text-lg">Välj proteinkälla</h3><div role="group" aria-label="Proteinkälla" className="mt-3 grid grid-cols-2 gap-2">{groups.map(group => { const Icon = proteinIcons[group.category]; return <Button key={group.category} variant={protein === group.category ? 'secondary' : 'outline'} type="button" disabled={busy} aria-pressed={protein === group.category} onClick={() => setProtein(group.category)} className={`h-11 gap-2 ${protein === group.category ? 'border border-primary' : ''}`}><Icon className="size-4" />{group.label}</Button>; })}</div></section>}
+          {suggestions.length > 0 && <section aria-label="Maträttsförslag"><h3 className="font-display text-lg">{groups.length ? 'Välj en maträtt' : 'Välj ett annat förslag'}</h3><div className="mt-3 space-y-2">{suggestions.map(({ dish, choice: index }) => {
             const active = index === choice && !title.trim();
             return <Button key={dish.title} variant="outline" type="button" disabled={busy} onClick={() => choose(index)} className={`h-auto w-full justify-between gap-3 whitespace-normal p-3 text-left text-sm ${active ? 'border-primary bg-secondary/50' : 'border-border bg-card'}`} aria-pressed={active}><span className="min-w-0"><span className="block font-medium">{dish.title}</span><span className="mt-1 block text-xs text-muted-foreground">{dish.ingredients}</span></span>{active && <Check className="size-4 shrink-0 text-primary" />}</Button>;
-          })}</div></section>
+          })}</div></section>}
           <section className="border-y border-border py-4"><h3 className="font-display text-lg">Förslag på mängd</h3><ul className="mt-3 space-y-2 text-sm leading-relaxed">{(preview?.portions ?? selected.portions).map(p => <li key={p} className="flex gap-2"><span className="mt-2 size-1 shrink-0 rounded-full bg-primary" />{p}</li>)}</ul><p className="mt-3 text-xs leading-relaxed text-muted-foreground">{title.trim() ? 'För egen mat gäller en generell portionsguide för måltiden, inte en beräkning av maträtten. ' : ''}Anpassa efter hunger och mättnad. Kontrollera alltid att maten passar dina allergier.</p></section>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <div className="flex flex-wrap justify-between gap-2"><Button variant="ghost" type="button" disabled={busy} onClick={() => submit(true)}><RefreshCw />Återställ förslag</Button><Button type="submit" disabled={busy}><Save />{busy ? 'Sparar…' : 'Spara måltid'}</Button></div>
