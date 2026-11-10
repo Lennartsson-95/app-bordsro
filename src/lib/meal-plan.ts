@@ -17,8 +17,20 @@ export function weekDays(day: string) {
   return Array.from({ length: 7 }, (_, i) => { const d = new Date(date); d.setDate(date.getDate() + i); return localDay(d); });
 }
 export function shiftDay(day: string, amount: number) { const date = new Date(`${day}T12:00:00`); date.setDate(date.getDate() + amount); return localDay(date); }
-export function plannedMeals(profile: ProfileAnswers, entries: MealEntry[]): Meal[] {
-  return createMealPlan(profile, Object.fromEntries(entries.map(entry => [entry.slot, entry.choice]))).map(meal => {
+export type Training = 0 | 1 | 2;
+/** Portion step without calories: goal sets the base, then active life, a larger body and training add one step each. */
+export function portionLevel(profile: ProfileAnswers, training: Training = 0) {
+  const base = profile.goal === 'lose' ? 0 : profile.goal === 'gain' ? 2 : 1;
+  const big = (profile.weight_kg ?? 0) >= 90 || (profile.height_cm ?? 0) >= 185 ? 1 : 0;
+  return Math.min(3, base + (profile.activity === 'high' ? 1 : 0) + big + (training === 2 ? 1 : 0));
+}
+export function carbPortion(profile: ProfileAnswers, training: Training = 0) { return ['1 kupad hand', '1–2 kupade händer', '2 kupade händer', '2–3 kupade händer'][portionLevel(profile, training)]!; }
+function trainingExtra(slot: MealSlot, training: Training) {
+  if (slot !== 'snack2' || !training) return [];
+  return [training === 2 ? 'Träningsdag: + 1 extra smörgås och 1 glas mjölk eller växtdryck' : 'Träningsdag: + 1 extra frukt'];
+}
+export function plannedMeals(profile: ProfileAnswers, entries: MealEntry[], training: Training = 0): Meal[] {
+  return createMealPlan(profile, Object.fromEntries(entries.map(entry => [entry.slot, entry.choice])), training).map(meal => {
     const entry = entries.find(e => e.slot === meal.slot);
     const time = entry?.custom_time ?? meal.time;
     let offset = minutes(time);
@@ -27,13 +39,14 @@ export function plannedMeals(profile: ProfileAnswers, entries: MealEntry[]): Mea
     const main = meal.slot === 'lunch' || meal.slot === 'dinner';
     const portions = main ? [
       '1 handflata av matens proteindel, till exempel fisk, bönor eller tofu',
-      `${profile.goal === 'lose' ? '1 kupad hand' : profile.goal === 'gain' || profile.activity === 'high' ? '2 kupade händer' : '1–2 kupade händer'} av ris, pasta, potatis eller motsvarande`,
+      `${carbPortion(profile, training)} av ris, pasta, potatis eller motsvarande`,
       '2 nävar grönsaker', '1 tumme olja eller annat matfett',
     ] : meal.slot === 'breakfast' ? [profile.goal === 'gain' ? '1 rejäl skål eller 2 smörgåsar, gärna med pålägg' : '1 skål eller 1–2 smörgåsar med pålägg', '1 näve frukt eller bär'] : [profile.goal === 'gain' ? '1 frukt + 2 smörgåsar med pålägg eller motsvarande' : '1 frukt + 1 smörgås med pålägg eller motsvarande'];
+    portions.push(...trainingExtra(meal.slot, training));
     return { ...meal, title: entry.custom_title, ingredients: '', image: null, portions, time, offset };
   }).sort((a, b) => a.offset - b.offset);
 }
-export function createMealPlan(profile: ProfileAnswers, choices: Partial<Record<MealSlot, number>> = {}): Meal[] {
+export function createMealPlan(profile: ProfileAnswers, choices: Partial<Record<MealSlot, number>> = {}, training: Training = 0): Meal[] {
   const start = minutes(profile.wake_time) + 30;
   let end = minutes(profile.sleep_time) - 60;
   if (end <= start) end += 1440;
@@ -45,7 +58,7 @@ export function createMealPlan(profile: ProfileAnswers, choices: Partial<Record<
     const alt = choices[slot] === 1;
     const offset = Math.round((start + ((end-start)*index/(slots.length-1))) / 5) * 5;
     const main = slot === 'lunch' || slot === 'dinner';
-    const carb = profile.goal === 'lose' ? '1 kupad hand' : extra || profile.activity === 'high' ? '2 kupade händer' : '1–2 kupade händer';
+    const carb = carbPortion(profile, training);
     const portions = main ? [`1 handflata ${slot === 'lunch' && !alt ? 'linser' : protein}`, `${carb} ${slot === 'dinner' && !alt ? 'potatis' : 'ris'}`, '2 nävar grönsaker', '1 tumme olja eller annat matfett'] : slot === 'breakfast' ? [extra ? '1 rejäl skål + 1 smörgås' : '1 skål', '1 näve frukt eller bär', vegan ? '1 glas berikad växtdryck' : '1 glas mjölk eller berikad växtdryck'] : [extra ? '1 frukt + 2 smörgåsar med pålägg' : '1 frukt + 1 smörgås med pålägg'];
     const label = { breakfast:'Frukost', snack1:'Förmiddagsmål', lunch:'Lunch', snack2:'Mellanmål', dinner:'Middag', evening:'Kvällsmål' }[slot];
     let title = '', ingredients = '', image: Meal['image'] = null;
@@ -53,6 +66,7 @@ export function createMealPlan(profile: ProfileAnswers, choices: Partial<Record<
     else if (slot === 'lunch') { title = alt ? `Ris med ${protein} & grönsaker` : 'Linsgryta med ris & sallad'; ingredients = alt ? `Ris, ${protein}, grönsaker, olja` : 'Linser, ris, morot, zucchini, tomat, sallad, olja'; if (!alt) image = 'lunch'; }
     else if (slot === 'dinner') { title = alt ? `Grönsaksris med ${protein}` : `Ugnspotatis med ${protein} & grönsaker`; ingredients = `${alt ? 'Ris' : 'Potatis'}, ${protein}, grönsaker, olja`; }
     else { title = alt ? 'Frukt & havregröt' : 'Frukt & smörgås'; ingredients = alt ? `Frukt, havre, ${vegan ? 'berikad växtdryck' : 'mjölk eller växtdryck'}` : `Frukt, bröd, ${vegan ? 'bönröra' : 'ost eller bönröra'}`; if (alt) portions.splice(0, portions.length, '1 frukt + 1 liten skål havregröt'); }
+    portions.push(...trainingExtra(slot, training));
     return { slot, label, time: clock(offset), offset, title, ingredients, portions, image };
   });
 }
