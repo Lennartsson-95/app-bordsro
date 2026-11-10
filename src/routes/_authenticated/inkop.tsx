@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { addShoppingItem, getShoppingChecks, getShoppingItems, getWeek, removeShoppingItem, toggleShoppingCheck } from '@/lib/today.functions';
-import { localDay, plannedMeals, shiftDay, shoppingList, weekDays } from '@/lib/meal-plan';
+import { localDay, plannedMeals, prepareOwnItem, shiftDay, shoppingList, weekDays } from '@/lib/meal-plan';
 import { profileSchema } from '@/lib/profile-schema';
 import { pageHead } from '@/lib/page-head';
 
@@ -55,7 +55,6 @@ function ShoppingPage() {
   const format = (v: string) => new Date(`${v}T12:00:00`).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
   const all = [...items.map(i => i.name), ...custom, ...ownItems];
   const bought = all.filter(name => done.has(name)).length;
-  const onList = (name: string) => all.some(existing => existing.toLowerCase() === name.toLowerCase());
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const { item, duplicate } = prepareOwnItem(draft, all);
