@@ -38,3 +38,4 @@ use the editor.
 - Keep meal reminders in the open Today page, persisted as profile preferences with local-clock scheduling; background push is not enabled and must not be implied.
 - Select appetite tips in a pure meal-slot module with date-based rotation; scheduled and test reminders must use the same selection.
 - Keep optional own-item shopping quantities separate from item names and validate them through a shared schema; quantities must not change deduplication or check-off identity.
+- Keep age and sex as optional profile fields that only nudge the portion level, and count sex only while no body measurements are given; this keeps suggestions explainable without calorie counting.
