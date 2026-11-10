@@ -17,6 +17,8 @@ export type Database = {
       daily_meals: {
         Row: {
           choice: number
+          custom_time: string | null
+          custom_title: string | null
           day: string
           eaten: boolean
           slot: string
@@ -24,6 +26,8 @@ export type Database = {
         }
         Insert: {
           choice?: number
+          custom_time?: string | null
+          custom_title?: string | null
           day: string
           eaten?: boolean
           slot: string
@@ -31,6 +35,8 @@ export type Database = {
         }
         Update: {
           choice?: number
+          custom_time?: string | null
+          custom_title?: string | null
           day?: string
           eaten?: boolean
           slot?: string
