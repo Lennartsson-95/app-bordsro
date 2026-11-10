@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { queryOptions, useSuspenseQuery, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
-import { Bell, BellRing, Check, Leaf, Utensils, X } from 'lucide-react';
+import { Bell, BellRing, Check, Utensils, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { pageHead } from '@/lib/page-head';
 import { getToday, updateReminders } from '@/lib/today.functions';
 import { plannedMeals, dueReminders, localDay, minutes, type MealSlot } from '@/lib/meal-plan';
-import { goalChoices, profileSchema, trainingLevel } from '@/lib/profile-schema';
+import { profileSchema, trainingLevel } from '@/lib/profile-schema';
 import { MealList } from '@/components/meal-list';
 import { WorkoutPanel } from '@/components/workout-panel';
 
