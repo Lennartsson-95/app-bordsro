@@ -24,7 +24,7 @@ export function portionLevel(profile: ProfileAnswers, training: Training = 0) {
   const big = (profile.weight_kg ?? 0) >= 90 || (profile.height_cm ?? 0) >= 185 ? 1 : 0;
   return Math.min(3, base + (profile.activity === 'high' ? 1 : 0) + big + (training === 2 ? 1 : 0));
 }
-export function carbPortion(profile: ProfileAnswers, training: Training = 0) { return ['1 kupad hand', '1–2 kupade händer', '2 kupade händer', '2–3 kupade händer'][portionLevel(profile, training)]!; }
+export function carbPortion(profile: ProfileAnswers, training: Training = 0) { return ['1 kupad hand', '1–2 kupade händer', '2 kupade händer', '2–3 kupade händer'][portionLevel(profile, training)] ?? '1–2 kupade händer'; }
 function trainingExtra(slot: MealSlot, training: Training) {
   if (slot !== 'snack2' || !training) return [];
   return [training === 2 ? 'Träningsdag: + 1 extra smörgås och 1 glas mjölk eller växtdryck' : 'Träningsdag: + 1 extra frukt'];
@@ -35,28 +35,51 @@ export function dishOptions(profile: ProfileAnswers): Record<MealSlot, Dish[]> {
   const vegan = profile.diet === 'vegan';
   const protein = profile.diet === 'mixed' ? 'kyckling' : profile.diet === 'pescatarian' ? 'fisk' : 'bönor';
   const drink = vegan ? 'berikad växtdryck' : 'mjölk eller växtdryck';
+  const fish = profile.diet === 'mixed' || profile.diet === 'pescatarian';
+  const variedLunches: Dish[] = [
+    { title: 'Tofuwok med nudlar', ingredients: 'Tofu, nudlar, broccoli, morot, olja', image: null, proteinPart: 'tofu', carbPart: 'nudlar' },
+    { title: 'Kikärtssallad med bulgur', ingredients: 'Kikärtor, bulgur, gurka, tomat, sallad, olja', image: null, proteinPart: 'kikärtor', carbPart: 'bulgur' },
+    { title: fish ? 'Lax med potatis & broccoli' : 'Linsbiffar med potatis & broccoli', ingredients: `${fish ? 'Lax' : 'Linser'}, potatis, broccoli, olja`, image: null, proteinPart: fish ? 'lax' : 'linsbiffar', carbPart: 'potatis' },
+    { title: vegan ? 'Bönröra på toast med sallad' : 'Omelett med bröd & sallad', ingredients: `${vegan ? 'Bönor' : 'Ägg'}, bröd, tomat, sallad, olja`, image: null, proteinPart: vegan ? 'bönröra' : 'omelett', carbPart: 'bröd' },
+    { title: profile.diet === 'mixed' ? 'Kalkon med couscous & grönsaker' : 'Tofu med couscous & grönsaker', ingredients: `${profile.diet === 'mixed' ? 'Kalkon' : 'Tofu'}, couscous, paprika, zucchini, olja`, image: null, proteinPart: profile.diet === 'mixed' ? 'kalkon' : 'tofu', carbPart: 'couscous' },
+  ];
+  const variedDinners: Dish[] = [
+    { title: 'Tofu med ris & broccoli', ingredients: 'Tofu, ris, broccoli, morot, olja', image: null, proteinPart: 'tofu', carbPart: 'ris' },
+    { title: 'Kikärtsgryta med bulgur', ingredients: 'Kikärtor, bulgur, tomat, spenat, olja', image: null, proteinPart: 'kikärtor', carbPart: 'bulgur' },
+    { title: fish ? 'Torsk med potatis & ärtor' : 'Linsgryta med potatis & ärtor', ingredients: `${fish ? 'Torsk' : 'Linser'}, potatis, ärtor, morot, olja`, image: null, proteinPart: fish ? 'torsk' : 'linser', carbPart: 'potatis' },
+    { title: vegan ? 'Böntacos med grönsaker' : 'Halloumi med couscous & grönsaker', ingredients: vegan ? 'Bönor, tortillabröd, tomat, sallad, avokado' : 'Halloumi, couscous, paprika, zucchini, olja', image: null, proteinPart: vegan ? 'bönor' : 'halloumi', carbPart: vegan ? 'tortillabröd' : 'couscous' },
+    { title: profile.diet === 'mixed' ? 'Köttbullar med potatis & gröna ärtor' : 'Bönbiffar med potatis & gröna ärtor', ingredients: `${profile.diet === 'mixed' ? 'Nötfärs' : 'Bönor'}, potatis, ärtor, morot, olja`, image: null, proteinPart: profile.diet === 'mixed' ? 'köttbullar' : 'bönbiffar', carbPart: 'potatis' },
+  ];
   const snacks: Dish[] = [
     { title: 'Frukt & smörgås', ingredients: `Frukt, bröd, ${vegan ? 'bönröra' : 'ost eller bönröra'}`, image: null },
     { title: 'Frukt & havregröt', ingredients: `Frukt, havre, ${drink}`, image: null, portions: ['1 frukt + 1 liten skål havregröt'] },
     { title: 'Smoothie med frukt & bär', ingredients: `Frukt, bär, ${drink}`, image: null },
+    { title: vegan ? 'Växtyoghurt med bär & nötter' : 'Kvarg med bär & nötter', ingredients: `${vegan ? 'Berikad växtyoghurt' : 'Kvarg'}, bär, nötter`, image: null, portions: ['1 liten skål', '1 näve bär', '1 liten näve nötter'] },
+    { title: 'Hummussmörgås med gurka', ingredients: 'Bröd, kikärtor, tahini, gurka', image: null, portions: [profile.goal === 'gain' ? '2 smörgåsar med hummus' : '1 smörgås med hummus', '1 näve gurka'] },
+    { title: vegan ? 'Smörgås med tofu & paprika' : 'Äggsmörgås med paprika', ingredients: `Bröd, ${vegan ? 'tofu' : 'ägg'}, paprika`, image: null, portions: [profile.goal === 'gain' ? `2 smörgåsar med ${vegan ? 'tofu' : 'ägg'}` : `1 smörgås med ${vegan ? 'tofu' : 'ägg'}`, '1 näve paprika'] },
   ];
   return {
     breakfast: [
       { title: 'Havregröt med banan & bär', ingredients: `Havre, banan, bär, ${drink}`, image: 'breakfast' },
       { title: vegan ? 'Växtyoghurt med frukt' : 'Yoghurt med frukt', ingredients: `${vegan ? 'Berikad växtyoghurt' : 'Yoghurt'}, havreflingor, frukt`, image: null },
       { title: 'Smörgåsar med pålägg', ingredients: `Bröd, ${vegan ? 'bönröra' : 'ost eller bönröra'}, paprika eller gurka`, image: null },
+      { title: vegan ? 'Tofuröra med toast & tomat' : 'Äggröra med toast & tomat', ingredients: `${vegan ? 'Tofu' : 'Ägg'}, bröd, tomat, olja`, image: null, portions: [`1 handflata ${vegan ? 'tofuröra' : 'äggröra'}`, profile.goal === 'gain' ? '2 skivor bröd' : '1–2 skivor bröd', '1 näve tomat'] },
+      { title: vegan ? 'Sojayoghurt med havre & bär' : 'Keso med havre & bär', ingredients: `${vegan ? 'Berikad sojayoghurt' : 'Keso'}, havre, bär`, image: null },
+      { title: 'Hummustoast med avokado', ingredients: 'Bröd, kikärtor, tahini, avokado, tomat', image: null, portions: [profile.goal === 'gain' ? '2 smörgåsar med hummus' : '1–2 smörgåsar med hummus', 'En halv avokado', '1 näve tomat'] },
     ],
     snack1: snacks,
     lunch: [
       { title: 'Linsgryta med ris & sallad', ingredients: 'Linser, ris, morot, zucchini, tomat, sallad, olja', image: 'lunch', proteinPart: 'linser', carbPart: 'ris' },
       { title: `Ris med ${protein} & grönsaker`, ingredients: `Ris, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'ris' },
       { title: `Pastasallad med ${protein}`, ingredients: `Pasta, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'pasta' },
+      ...variedLunches,
     ],
     snack2: snacks,
     dinner: [
       { title: `Ugnspotatis med ${protein} & grönsaker`, ingredients: `Potatis, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'potatis' },
       { title: `Grönsaksris med ${protein}`, ingredients: `Ris, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'ris' },
       { title: `Gryta med ${protein} & potatis`, ingredients: `${protein}, potatis, rotfrukter, tomat`, image: null, proteinPart: protein, carbPart: 'potatis' },
+      ...variedDinners,
     ],
     evening: snacks,
   };
@@ -87,7 +110,8 @@ export function createMealPlan(profile: ProfileAnswers, choices: Partial<Record<
   const options = dishOptions(profile);
   return slots.map((slot, index) => {
     const dishes = options[slot];
-    const dish = dishes[Math.min(Math.max(choices[slot] ?? 0, 0), dishes.length - 1)]!;
+    const dish = dishes[Math.min(Math.max(choices[slot] ?? 0, 0), dishes.length - 1)];
+    if (!dish) throw new Error('Måltidsförslag saknas.');
     const offset = Math.round((start + ((end-start)*index/(slots.length-1))) / 5) * 5;
     const main = slot === 'lunch' || slot === 'dinner';
     const carb = carbPortion(profile, training);

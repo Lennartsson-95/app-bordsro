@@ -51,6 +51,29 @@ describe('Meal suggestions', () => {
     const options = dishOptions(initialAnswers);
     for (const dishes of Object.values(options)) expect(dishes.length).toBeGreaterThanOrEqual(3);
   });
+  it('offers varied protein sources for lunch and dinner', () => {
+    const options = dishOptions(initialAnswers);
+    expect(options.lunch).toHaveLength(8);
+    expect(options.dinner).toHaveLength(8);
+    expect(options.lunch.map(d => d.proteinPart)).toEqual(['linser', 'kyckling', 'kyckling', 'tofu', 'kikärtor', 'lax', 'omelett', 'kalkon']);
+    expect(options.dinner.map(d => d.proteinPart)).toEqual(['kyckling', 'kyckling', 'kyckling', 'tofu', 'kikärtor', 'torsk', 'halloumi', 'köttbullar']);
+  });
+  it('keeps the expanded suggestions compatible with each diet', () => {
+    for (const diet of ['vegan', 'vegetarian', 'pescatarian'] as const) {
+      const dishes = Object.values(dishOptions({ ...initialAnswers, diet })).flat();
+      expect(JSON.stringify(dishes)).not.toMatch(/kyckling|kalkon|nötfärs|köttbullar/i);
+      if (diet !== 'pescatarian') expect(JSON.stringify(dishes)).not.toMatch(/lax|torsk|fisk/i);
+      if (diet === 'vegan') expect(JSON.stringify(dishes)).not.toMatch(/ägg|halloumi|keso|kvarg|mjölk|ost eller/i);
+    }
+  });
+  it('derives portions and shopping ingredients from a new protein choice', () => {
+    const lunch = createMealPlan(initialAnswers, { lunch: 5 }).find(m => m.slot === 'lunch');
+    expect(lunch?.title).toBe('Lax med potatis & broccoli');
+    expect(lunch?.portions[0]).toBe('1 handflata lax');
+    expect(lunch?.portions[1]).toBe('1–2 kupade händer potatis');
+    expect(lunch?.ingredients).toBe('Lax, potatis, broccoli, olja');
+    expect(mealEditSchema.safeParse({ day: '2026-11-10', slot: 'lunch', choice: 7, custom_title: null, custom_time: null }).success).toBe(true);
+  });
   it('uses the dish the user picked from the suggestions', () => {
     expect(createMealPlan(initialAnswers, { lunch: 2 }).find(m => m.slot === 'lunch')?.title).toBe('Pastasallad med kyckling');
     expect(createMealPlan({ ...initialAnswers, diet: 'vegan' }, { dinner: 1 }).find(m => m.slot === 'dinner')?.title).toBe('Grönsaksris med bönor');
