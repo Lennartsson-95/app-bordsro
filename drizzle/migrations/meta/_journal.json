@@ -8,6 +8,13 @@
       "when": 1794301436164,
       "tag": "0000_create_personal_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794301580137,
+      "tag": "0001_restrict_profile_trigger_execution",
+      "breakpoints": true
     }
   ]
 }
