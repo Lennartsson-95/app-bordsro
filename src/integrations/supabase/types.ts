@@ -103,6 +103,32 @@ export type Database = {
         }
         Relationships: []
       }
+      shopping_checks: {
+        Row: {
+          item: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          item: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          item?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_checks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workouts: {
         Row: {
           created_at: string
