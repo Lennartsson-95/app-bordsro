@@ -52,10 +52,10 @@ function ShoppingPage() {
   const profile = profileSchema.safeParse(data.profile);
   if (!profile.success || !data.profile.completed) return <main className="mx-auto max-w-xl px-6 py-12"><h1 className="font-display text-3xl">Börja med dina frågor</h1><Button asChild className="mt-6"><Link to="/min-profil">Till mina frågor</Link></Button></main>;
   const meals = days.flatMap(date => plannedMeals(profile.data, data.meals.filter(e => e.day === date)));
-  const { items, custom } = shoppingList(meals);
+  const { items } = shoppingList(meals);
   const done = new Set(checked);
   const format = (v: string) => new Date(`${v}T12:00:00`).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
-  const all = [...items.map(i => i.name), ...custom, ...ownItems.map(i => i.item)];
+  const all = [...items.map(i => i.name), ...ownItems.map(i => i.item)];
   const bought = all.filter(name => done.has(name)).length;
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,7 +75,7 @@ function ShoppingPage() {
       <div className="flex items-center gap-2"><Button variant="outline" size="icon" aria-label="Föregående vecka" onClick={() => setDay(shiftDay(day, -7))}><ChevronLeft /></Button><Button variant="outline" onClick={() => setDay(localDay(new Date()))}>Denna vecka</Button><Button variant="outline" size="icon" aria-label="Nästa vecka" onClick={() => setDay(shiftDay(day, 7))}><ChevronRight /></Button></div></div>
     <p className="mt-6 text-sm text-muted-foreground">Samlad från rätterna i din veckoplan. Mängden beror på hur många du handlar för – portionerna ser du i varje måltid.</p>
     <ul className="mt-4 divide-y divide-border border-y border-border">{items.map(i => row(i.name, i.count > 1 ? `${i.count} måltider` : undefined))}</ul>
-    <h2 className="mt-8 font-display text-xl">Egna rätter och dina varor</h2>
+    <h2 className="mt-8 font-display text-xl">Dina egna varor</h2>
     <p className="text-sm text-muted-foreground">Lägg till varorna du behöver till dina egna rätter och bocka av dem när du handlat.</p>
     <form onSubmit={submit} className="mt-4 grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto]">
       <div className="min-w-0"><label htmlFor="own-item" className="mb-1 block text-sm">Vara</label><Input id="own-item" value={draft} onChange={e => { setDraft(e.target.value); setNote(''); }} placeholder="T.ex. havregryn, fisk, äpplen" maxLength={120} disabled={add.isPending} /></div>
@@ -84,7 +84,7 @@ function ShoppingPage() {
     </form>
     {note && <p role="alert" className="mt-2 text-sm text-muted-foreground">{note}</p>}
     {add.isError && <p role="alert" className="mt-2 text-sm text-destructive">Varan kunde inte läggas till. Försök igen.</p>}
-    <ul className="mt-3 divide-y divide-border border-y border-border">{custom.map(c => row(c, 'egen rätt'))}{ownItems.map(i => row(i.item, i.quantity || undefined, true))}</ul>
-    {custom.length === 0 && ownItems.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Inga egna varor ännu. Skriv in det du behöver ovan.</p>}
+    <ul className="mt-3 divide-y divide-border border-y border-border">{ownItems.map(i => row(i.item, i.quantity || undefined, true))}</ul>
+    {ownItems.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Inga egna varor ännu. Skriv in det du behöver ovan.</p>}
   </main>;
 }
