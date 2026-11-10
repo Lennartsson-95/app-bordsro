@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { workoutSchema } from './profile-schema';
 import { daySchema, slotSchema, mealEditSchema } from './meal-plan';
 
 export const getToday = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth])
@@ -10,8 +11,9 @@ export const getToday = createServerFn({ method: 'GET' }).middleware([requireSup
       context.supabase.from('profiles').select('*').eq('id', context.userId).single(),
       context.supabase.from('daily_meals').select('*').eq('user_id', context.userId).eq('day', data.day),
     ]);
-    if (profile.error || meals.error) throw new Error('Dina måltider kunde inte hämtas. Försök igen.');
-    return { profile: profile.data, meals: meals.data };
+    const workouts = await context.supabase.from('workouts').select('id, day, kind, minutes, intensity').eq('user_id', context.userId).eq('day', data.day).order('created_at');
+    if (profile.error || meals.error || workouts.error) throw new Error('Dina måltider kunde inte hämtas. Försök igen.');
+    return { profile: profile.data, meals: meals.data, workouts: workouts.data };
   });
 export const updateMeal = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ day: daySchema, slot: slotSchema, eaten: z.boolean().optional(), choice: z.number().int().min(0).max(1).optional() }).refine(v => v.eaten !== undefined || v.choice !== undefined).parse(input))
@@ -35,8 +37,9 @@ export const getWeek = createServerFn({ method: 'GET' }).middleware([requireSupa
       context.supabase.from('profiles').select('*').eq('id', context.userId).single(),
       context.supabase.from('daily_meals').select('*').eq('user_id', context.userId).gte('day', data.start).lte('day', data.end),
     ]);
-    if (profile.error || meals.error) throw new Error('Veckans måltider kunde inte hämtas.');
-    return { profile: profile.data, meals: meals.data };
+    const workouts = await context.supabase.from('workouts').select('id, day, kind, minutes, intensity').eq('user_id', context.userId).gte('day', data.start).lte('day', data.end);
+    if (profile.error || meals.error || workouts.error) throw new Error('Veckans måltider kunde inte hämtas.');
+    return { profile: profile.data, meals: meals.data, workouts: workouts.data };
   });
 export const editMeal = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => mealEditSchema.parse(input))
@@ -44,4 +47,18 @@ export const editMeal = createServerFn({ method: 'POST' }).middleware([requireSu
     const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, ...data }, { onConflict: 'user_id,day,slot', defaultToNull: false });
     if (error) throw new Error('Måltiden kunde inte sparas. Försök igen.');
     return { saved: true };
+  });
+export const addWorkout = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => workoutSchema.extend({ day: daySchema }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from('workouts').insert({ ...data, user_id: context.userId });
+    if (error) throw new Error('Träningen kunde inte sparas. Försök igen.');
+    return { saved: true };
+  });
+export const deleteWorkout = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from('workouts').delete().eq('id', data.id).eq('user_id', context.userId);
+    if (error) throw new Error('Träningen kunde inte tas bort. Försök igen.');
+    return { removed: true };
   });
