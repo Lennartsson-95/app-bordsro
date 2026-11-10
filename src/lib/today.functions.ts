@@ -44,7 +44,8 @@ export const getWeek = createServerFn({ method: 'GET' }).middleware([requireSupa
 export const editMeal = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => mealEditSchema.parse(input))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, ...data }, { onConflict: 'user_id,day,slot', defaultToNull: false });
+    const { choice, ...rest } = data;
+    const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, ...rest, ...(choice !== undefined ? { choice } : {}) }, { onConflict: 'user_id,day,slot', defaultToNull: false });
     if (error) throw new Error('Måltiden kunde inte sparas. Försök igen.');
     return { saved: true };
   });
