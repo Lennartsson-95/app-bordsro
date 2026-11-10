@@ -61,6 +61,7 @@ export type Database = {
       profiles: {
         Row: {
           activity: string
+          age: number | null
           allergies: string
           completed: boolean
           diet: string
@@ -70,6 +71,7 @@ export type Database = {
           id: string
           reminder_lead: number
           reminders_enabled: boolean
+          sex: string | null
           sleep_time: string
           target_weight_kg: number | null
           wake_time: string
@@ -77,6 +79,7 @@ export type Database = {
         }
         Insert: {
           activity?: string
+          age?: number | null
           allergies?: string
           completed?: boolean
           diet?: string
@@ -86,6 +89,7 @@ export type Database = {
           id: string
           reminder_lead?: number
           reminders_enabled?: boolean
+          sex?: string | null
           sleep_time?: string
           target_weight_kg?: number | null
           wake_time?: string
@@ -93,6 +97,7 @@ export type Database = {
         }
         Update: {
           activity?: string
+          age?: number | null
           allergies?: string
           completed?: boolean
           diet?: string
@@ -102,6 +107,7 @@ export type Database = {
           id?: string
           reminder_lead?: number
           reminders_enabled?: boolean
+          sex?: string | null
           sleep_time?: string
           target_weight_kg?: number | null
           wake_time?: string

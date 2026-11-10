@@ -60,6 +60,19 @@ describe('Meal suggestions', () => {
   it('suggests more food for a larger body', () => {
     expect(createMealPlan({ ...initialAnswers, weight_kg: 95, height_cm: 180 }).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
   });
+  it('gives an older person a smaller portion and a young person a larger one', () => {
+    expect(createMealPlan({ ...initialAnswers, age: 70 }).find(m => m.slot === "lunch")?.portions[1]).toBe('1 kupad hand ris');
+    expect(createMealPlan({ ...initialAnswers, age: 17 }).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
+    expect(createMealPlan({ ...initialAnswers, age: 40 }).find(m => m.slot === "lunch")?.portions[1]).toBe('1–2 kupade händer ris');
+  });
+  it('uses sex only while no length or weight is given', () => {
+    expect(createMealPlan({ ...initialAnswers, sex: 'man' }).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
+    expect(createMealPlan({ ...initialAnswers, sex: 'man', weight_kg: 60 }).find(m => m.slot === "lunch")?.portions[1]).toBe('1–2 kupade händer ris');
+    expect(createMealPlan({ ...initialAnswers, sex: 'woman' }).find(m => m.slot === "lunch")?.portions[1]).toBe('1–2 kupade händer ris');
+  });
+  it('never suggests less than the smallest portion step', () => {
+    expect(createMealPlan({ ...initialAnswers, goal: 'lose', age: 80 }).find(m => m.slot === "lunch")?.portions[1]).toBe('1 kupad hand ris');
+  });
   it('offers several dishes to choose between for every meal', () => {
     const options = dishOptions(initialAnswers);
     for (const dishes of Object.values(options)) expect(dishes.length).toBeGreaterThanOrEqual(3);
