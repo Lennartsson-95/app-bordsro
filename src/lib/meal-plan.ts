@@ -8,6 +8,31 @@ export function localDay(date: Date) { return `${date.getFullYear()}-${String(da
 export function minutes(time: string) { const [h = 0, m = 0] = time.split(':').map(Number); return h * 60 + m; }
 export function clock(total: number) { const normalized = ((Math.round(total) % 1440) + 1440) % 1440; return `${String(Math.floor(normalized/60)).padStart(2,'0')}:${String(normalized%60).padStart(2,'0')}`; }
 export type Meal = { slot: MealSlot; label: string; time: string; offset: number; title: string; ingredients: string; portions: string[]; image: 'breakfast' | 'lunch' | null };
+export type MealEntry = { slot: string; choice: number; eaten: boolean; custom_title: string | null; custom_time: string | null };
+export const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Välj en giltig tid.');
+export const mealEditSchema = z.object({ day: daySchema, slot: slotSchema, custom_title: z.string().trim().max(160, 'Använd högst 160 tecken.').nullable(), custom_time: timeSchema.nullable() });
+export function weekDays(day: string) {
+  const date = new Date(`${day}T12:00:00`);
+  date.setDate(date.getDate() - (date.getDay() + 6) % 7);
+  return Array.from({ length: 7 }, (_, i) => { const d = new Date(date); d.setDate(date.getDate() + i); return localDay(d); });
+}
+export function shiftDay(day: string, amount: number) { const date = new Date(`${day}T12:00:00`); date.setDate(date.getDate() + amount); return localDay(date); }
+export function plannedMeals(profile: ProfileAnswers, entries: MealEntry[]): Meal[] {
+  return createMealPlan(profile, Object.fromEntries(entries.map(entry => [entry.slot, entry.choice]))).map(meal => {
+    const entry = entries.find(e => e.slot === meal.slot);
+    const time = entry?.custom_time ?? meal.time;
+    let offset = minutes(time);
+    if (minutes(profile.sleep_time) < minutes(profile.wake_time) && offset < minutes(profile.wake_time)) offset += 1440;
+    if (!entry?.custom_title) return { ...meal, time, offset };
+    const main = meal.slot === 'lunch' || meal.slot === 'dinner';
+    const portions = main ? [
+      '1 handflata av matens proteindel, till exempel fisk, bönor eller tofu',
+      `${profile.goal === 'lose' ? '1 kupad hand' : profile.goal === 'gain' || profile.activity === 'high' ? '2 kupade händer' : '1–2 kupade händer'} av ris, pasta, potatis eller motsvarande`,
+      '2 nävar grönsaker', '1 tumme olja eller annat matfett',
+    ] : meal.slot === 'breakfast' ? [profile.goal === 'gain' ? '1 rejäl skål eller 2 smörgåsar, gärna med pålägg' : '1 skål eller 1–2 smörgåsar med pålägg', '1 näve frukt eller bär'] : [profile.goal === 'gain' ? '1 frukt + 2 smörgåsar med pålägg eller motsvarande' : '1 frukt + 1 smörgås med pålägg eller motsvarande'];
+    return { ...meal, title: entry.custom_title, ingredients: '', image: null, portions, time, offset };
+  }).sort((a, b) => a.offset - b.offset);
+}
 export function createMealPlan(profile: ProfileAnswers, choices: Partial<Record<MealSlot, number>> = {}): Meal[] {
   const start = minutes(profile.wake_time) + 30;
   let end = minutes(profile.sleep_time) - 60;

@@ -14,5 +14,5 @@
 - [ ] Klickbara måltider med dolda portionsförslag.
 - [ ] Egna maträtter och ändrade tider sparade per datum.
 - [ ] Planera och se sju dagar.
-- [ ] Påminnelser utanför appen (kräver ansluten push-tjänst).
+- [x] Påminnelser utanför appen skjuts upp enligt Åsas önskemål; ingen push-tjänst ansluts.
 - [ ] Testa sparade val på dator och mobil.

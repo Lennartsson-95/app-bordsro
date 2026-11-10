@@ -1,14 +1,14 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
-import { daySchema, slotSchema } from './meal-plan';
+import { daySchema, slotSchema, mealEditSchema } from './meal-plan';
 
 export const getToday = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ day: daySchema }).parse(input))
   .handler(async ({ context, data }) => {
     const [profile, meals] = await Promise.all([
       context.supabase.from('profiles').select('*').eq('id', context.userId).single(),
-      context.supabase.from('daily_meals').select('slot, eaten, choice').eq('user_id', context.userId).eq('day', data.day),
+      context.supabase.from('daily_meals').select('*').eq('user_id', context.userId).eq('day', data.day),
     ]);
     if (profile.error || meals.error) throw new Error('Dina måltider kunde inte hämtas. Försök igen.');
     return { profile: profile.data, meals: meals.data };
@@ -26,5 +26,22 @@ export const updateReminders = createServerFn({ method: 'POST' }).middleware([re
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from('profiles').update({ reminders_enabled: data.enabled, reminder_lead: data.lead }).eq('id', context.userId);
     if (error) throw new Error('Påminnelsen kunde inte sparas. Försök igen.');
+    return { saved: true };
+  });
+export const getWeek = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ start: daySchema, end: daySchema }).parse(input))
+  .handler(async ({ context, data }) => {
+    const [profile, meals] = await Promise.all([
+      context.supabase.from('profiles').select('*').eq('id', context.userId).single(),
+      context.supabase.from('daily_meals').select('*').eq('user_id', context.userId).gte('day', data.start).lte('day', data.end),
+    ]);
+    if (profile.error || meals.error) throw new Error('Veckans måltider kunde inte hämtas.');
+    return { profile: profile.data, meals: meals.data };
+  });
+export const editMeal = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => mealEditSchema.parse(input))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, ...data }, { onConflict: 'user_id,day,slot', defaultToNull: false });
+    if (error) throw new Error('Måltiden kunde inte sparas. Försök igen.');
     return { saved: true };
   });
