@@ -12,6 +12,7 @@ import { plannedMeals, dueReminders, localDay, minutes, type MealSlot } from '@/
 import { profileSchema, trainingLevel } from '@/lib/profile-schema';
 import { MealList } from '@/components/meal-list';
 import { WorkoutPanel } from '@/components/workout-panel';
+import { appetiteTip } from '@/lib/appetite-tips';
 
 const todayQuery = (day: string) => queryOptions({ queryKey: ['today',day], queryFn: () => getToday({ data: { day } }) });
 export const Route = createFileRoute('/_authenticated/idag')({
@@ -27,7 +28,7 @@ function TodayPage() {
   const saveReminders = useServerFn(updateReminders);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [reminder, setReminder] = useState<{ label: string; title: string } | null>(null);
+  const [reminder, setReminder] = useState<{ slot: MealSlot; label: string; title: string } | null>(null);
   const reminded = useRef(new Set<string>());
   const profile = profileSchema.safeParse(data.profile);
   const training = trainingLevel(data.workouts);
@@ -42,7 +43,7 @@ function TodayPage() {
     for (const meal of dueReminders(meals,eaten,current,data.profile.reminder_lead)) {
       const key = `${day}:${meal.slot}`;
       if (reminded.current.has(key)) continue;
-      reminded.current.add(key); setReminder({ label:meal.label, title:meal.title });
+      reminded.current.add(key); setReminder({ slot:meal.slot, label:meal.label, title:meal.title });
     }
   }, [now, day, data.profile.reminders_enabled, data.profile.reminder_lead, data.profile.wake_time, data.profile.sleep_time, meals, eaten]);
   async function settings(enabled: boolean, lead: 0 | 5 | 15) {
@@ -54,7 +55,7 @@ function TodayPage() {
   if (!profile.success || !data.profile.completed) return <main className="mx-auto max-w-xl px-6 py-12"><h1 className="font-display text-4xl">Dina måltider börjar med dig</h1><p className="mt-4 text-muted-foreground">Besvara frågorna om dina matvanor och din vardag först.</p><Button asChild className="mt-6"><Link to="/min-profil">Till mina frågor</Link></Button></main>;
   return <main className="mx-auto max-w-6xl px-5 pb-12 pt-8 sm:px-10 sm:pt-12">
     <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="mb-3 text-sm capitalize text-muted-foreground">{now.toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'long'})}</p><h1 className="font-display text-4xl sm:text-5xl">Idag, {data.profile.display_name}</h1><p className="mt-3 text-muted-foreground">En måltid i taget.</p></div></div>
-    {reminder && <div role="alert" className="mt-6 flex items-start gap-3 rounded-md border border-primary bg-secondary p-5"><BellRing className="mt-1 shrink-0 text-primary" /><div className="min-w-0 flex-1"><p className="font-semibold">Dags för {reminder.label.toLowerCase()}</p><p className="mt-1 break-words text-sm">{reminder.title}</p><p className="mt-3 text-sm leading-relaxed">Dålig aptit? Drick en smoothie istället om du inte är hungrig. Välj ingredienser du tål.</p></div><Button variant="ghost" size="icon" className="shrink-0" title="Stäng påminnelsen" aria-label="Stäng påminnelsen" onClick={()=>setReminder(null)}><X /></Button></div>}
+    {reminder && <div role="alert" className="mt-6 flex items-start gap-3 rounded-md border border-primary bg-secondary p-5"><BellRing className="mt-1 shrink-0 text-primary" /><div className="min-w-0 flex-1"><p className="font-semibold">Dags för {reminder.label.toLowerCase()}</p><p className="mt-1 break-words text-sm">{reminder.title}</p><p className="mt-3 text-sm leading-relaxed">{appetiteTip(reminder.slot, day)}</p><p className="mt-2 text-xs text-muted-foreground">Välj ingredienser du tål.</p></div><Button variant="ghost" size="icon" className="shrink-0" title="Stäng påminnelsen" aria-label="Stäng påminnelsen" onClick={()=>setReminder(null)}><X /></Button></div>}
     {error && <p role="alert" className="mt-5 text-sm text-destructive">{error}</p>}
     <div className="mt-6"><Button variant="outline" asChild><Link to="/vecka">Planera veckan</Link></Button></div>
     <div className="mt-9 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -64,7 +65,7 @@ function TodayPage() {
       </div>
       <aside className="space-y-8 lg:sticky lg:top-6">
         <WorkoutPanel day={day} workouts={data.workouts ?? []} />
-        <section className="border-y border-border py-6"><div className="flex items-center justify-between gap-4"><h2 className="flex items-center gap-2 font-display text-xl"><Bell className="size-5 text-primary" />Påminnelser</h2><Switch aria-label="Aktivera måltidspåminnelser" checked={data.profile.reminders_enabled} disabled={busy!==null} onCheckedChange={v=>settings(v,data.profile.reminder_lead as 0|5|15)} /></div><p className="mb-4 mt-3 text-sm leading-relaxed text-muted-foreground">Påminnelser visas här medan Idag-sidan är öppen. De kommer inte när appen är stängd.</p><label className="mb-2 block text-xs font-medium" id="reminder-lead-label">När vill du bli påmind?</label><Select value={String(data.profile.reminder_lead)} disabled={busy!==null} onValueChange={v=>{ const lead=Number(v); if (lead===0 || lead===5 || lead===15) void settings(data.profile.reminders_enabled,lead); }}><SelectTrigger aria-labelledby="reminder-lead-label"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0">Vid måltiden</SelectItem><SelectItem value="5">5 minuter innan</SelectItem><SelectItem value="15">15 minuter innan</SelectItem></SelectContent></Select><Button variant="outline" className="mt-4 w-full" onClick={()=>setReminder(next ? {label:next.label,title:next.title} : {label:'frukost',title:'En lugn stund att äta något gott.'})}><BellRing />Testa påminnelse</Button></section>
+        <section className="border-y border-border py-6"><div className="flex items-center justify-between gap-4"><h2 className="flex items-center gap-2 font-display text-xl"><Bell className="size-5 text-primary" />Påminnelser</h2><Switch aria-label="Aktivera måltidspåminnelser" checked={data.profile.reminders_enabled} disabled={busy!==null} onCheckedChange={v=>settings(v,data.profile.reminder_lead as 0|5|15)} /></div><p className="mb-4 mt-3 text-sm leading-relaxed text-muted-foreground">Påminnelser visas här medan Idag-sidan är öppen. De kommer inte när appen är stängd.</p><label className="mb-2 block text-xs font-medium" id="reminder-lead-label">När vill du bli påmind?</label><Select value={String(data.profile.reminder_lead)} disabled={busy!==null} onValueChange={v=>{ const lead=Number(v); if (lead===0 || lead===5 || lead===15) void settings(data.profile.reminders_enabled,lead); }}><SelectTrigger aria-labelledby="reminder-lead-label"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0">Vid måltiden</SelectItem><SelectItem value="5">5 minuter innan</SelectItem><SelectItem value="15">15 minuter innan</SelectItem></SelectContent></Select><Button variant="outline" className="mt-4 w-full" onClick={()=>setReminder(next ? {slot:next.slot,label:next.label,title:next.title} : {slot:'breakfast',label:'frukost',title:'En lugn stund att äta något gott.'})}><BellRing />Testa påminnelse</Button></section>
         <section><h2 className="font-display text-xl">Lagom för dig</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">Handmåtten är en startpunkt. Anpassa mängden efter hunger, mättnad och hur du mår.</p><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{training ? (training===2 ? 'Du har tränat idag – lunch och middag har lite mer ris eller potatis, och mellanmålet har en extra smörgås.' : 'Du har rört på dig idag – mellanmålet har en extra frukt.') : profile.data.goal==='gain' ? 'Ditt förslag innehåller större portioner och ett extra kvällsmål.' : profile.data.activity==='high' ? 'Din aktiva vardag ger lite större portioner av ris och potatis.' : 'En jämn måltidsrytm ger plats för både huvudmål och mellanmål.'}</p></section>
         <section className="border-t border-border pt-6"><h2 className="font-display text-xl">Allergier & omtanke</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{data.profile.allergies ? `Du har angett: ${data.profile.allergies}. ` : ''}Förslagen är inte allergisäkrade. Kontrollera ingredienser och välj det du tål.</p><p className="mt-3 text-xs leading-relaxed text-muted-foreground">Vid sjukdom, ofrivillig viktförändring eller svårigheter med mat: prata med vården eller en dietist.</p></section>
       </aside>
