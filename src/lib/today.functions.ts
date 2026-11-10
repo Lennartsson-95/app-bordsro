@@ -16,7 +16,7 @@ export const getToday = createServerFn({ method: 'GET' }).middleware([requireSup
     return { profile: profile.data, meals: meals.data, workouts: workouts.data };
   });
 export const updateMeal = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ day: daySchema, slot: slotSchema, eaten: z.boolean().optional(), choice: z.number().int().min(0).max(1).optional() }).refine(v => v.eaten !== undefined || v.choice !== undefined).parse(input))
+  .inputValidator((input: unknown) => z.object({ day: daySchema, slot: slotSchema, eaten: z.boolean().optional(), choice: z.number().int().min(0).max(9).optional() }).refine(v => v.eaten !== undefined || v.choice !== undefined).parse(input))
   .handler(async ({ context, data }) => {
     const { day, slot } = data;
     const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, day, slot, ...(data.eaten !== undefined ? { eaten: data.eaten } : {}), ...(data.choice !== undefined ? { choice: data.choice } : {}) }, { onConflict: 'user_id,day,slot', defaultToNull: false });
@@ -44,7 +44,8 @@ export const getWeek = createServerFn({ method: 'GET' }).middleware([requireSupa
 export const editMeal = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => mealEditSchema.parse(input))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, ...data }, { onConflict: 'user_id,day,slot', defaultToNull: false });
+    const { choice, ...rest } = data;
+    const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, ...rest, ...(choice !== undefined ? { choice } : {}) }, { onConflict: 'user_id,day,slot', defaultToNull: false });
     if (error) throw new Error('Måltiden kunde inte sparas. Försök igen.');
     return { saved: true };
   });

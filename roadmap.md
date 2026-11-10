@@ -16,3 +16,5 @@
 - [x] Planera och se sju dagar.
 - [x] Påminnelser utanför appen skjuts upp enligt Åsas önskemål; ingen push-tjänst ansluts.
 - [x] Testa sparade val på dator och mobil.
+# Fler matförslag
+- [x] Flera rätter att välja mellan för varje måltid, sparade per dag.
