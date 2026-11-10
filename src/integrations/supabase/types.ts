@@ -129,6 +129,35 @@ export type Database = {
           },
         ]
       }
+      shopping_items: {
+        Row: {
+          created_at: string
+          item: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          item: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          item?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workouts: {
         Row: {
           created_at: string
