@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_meals ADD COLUMN chosen boolean NOT NULL DEFAULT false;

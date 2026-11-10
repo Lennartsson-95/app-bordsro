@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, prepareOwnItem, weekDays, mealEditSchema, proteinGroups } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
+  it('a newly added meal has no food chosen until the user picks one', () => {
+    const [meal] = plannedMeals(initialAnswers, [{ slot: 'lunch', choice: 0, eaten: false, custom_title: null, custom_time: null, added: true, chosen: false }]);
+    expect(meal?.title).toBe('Välj mat');
+    expect(meal?.ingredients).toBe('');
+  });
   it('offers exactly Frukost, Mellanmål, Lunch, Middag and Kvällsmål to add', () => {
     expect(createMealPlan(initialAnswers).map(m => m.label).sort()).toEqual(['Frukost','Kvällsmål','Lunch','Mellanmål','Middag']);
   });
