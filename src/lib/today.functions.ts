@@ -46,14 +46,14 @@ export const editMeal = createServerFn({ method: 'POST' }).middleware([requireSu
   .inputValidator((input: unknown) => mealEditSchema.parse(input))
   .handler(async ({ context, data }) => {
     const { choice, ...rest } = data;
-    const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, ...rest, ...(choice !== undefined ? { choice } : {}) }, { onConflict: 'user_id,day,slot', defaultToNull: false });
+    const { error } = await context.supabase.from('daily_meals').upsert({ user_id: context.userId, ...rest, ...(choice !== undefined ? { choice, chosen: true } : {}) }, { onConflict: 'user_id,day,slot', defaultToNull: false });
     if (error) throw new Error('Måltiden kunde inte sparas. Försök igen.');
     return { saved: true };
   });
 export const setMealAdded = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ day: daySchema, slot: slotSchema, added: z.boolean() }).parse(input))
   .handler(async ({ context, data }) => {
-    const row: { user_id: string; day: string; slot: string; added: boolean; eaten?: boolean; custom_title?: string | null; custom_time?: string | null; choice?: number } = data.added ? { user_id: context.userId, day: data.day, slot: data.slot, added: true } : { user_id: context.userId, day: data.day, slot: data.slot, added: false, eaten: false, custom_title: null, custom_time: null, choice: 0 };
+    const row: { user_id: string; day: string; slot: string; added: boolean; eaten?: boolean; custom_title?: string | null; custom_time?: string | null; choice?: number; chosen?: boolean } = data.added ? { user_id: context.userId, day: data.day, slot: data.slot, added: true } : { user_id: context.userId, day: data.day, slot: data.slot, added: false, eaten: false, custom_title: null, custom_time: null, choice: 0, chosen: false };
     const { error } = await context.supabase.from('daily_meals').upsert(row, { onConflict: 'user_id,day,slot', defaultToNull: false });
     if (error) throw new Error('Måltiden kunde inte sparas. Försök igen.');
     return { saved: true };
