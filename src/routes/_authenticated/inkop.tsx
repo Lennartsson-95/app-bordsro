@@ -58,9 +58,9 @@ function ShoppingPage() {
   const onList = (name: string) => all.some(existing => existing.toLowerCase() === name.toLowerCase());
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const item = draft.trim().replace(/\s+/g, ' ');
+    const { item, duplicate } = prepareOwnItem(draft, all);
     if (!item) return;
-    if (onList(item)) { setNote(`${item} finns redan på listan.`); return; }
+    if (duplicate) { setNote(`${item} finns redan på listan.`); return; }
     setNote(''); setDraft(''); add.mutate(item);
   }
   const row = (item: string, note?: string, removable = false) => <li key={item} className="flex items-center gap-1">

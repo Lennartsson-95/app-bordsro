@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, weekDays, mealEditSchema } from '@/lib/meal-plan';
+import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, prepareOwnItem, weekDays, mealEditSchema } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
   it('uses the selected meal time and own food with a profile-based portion guide', () => {
