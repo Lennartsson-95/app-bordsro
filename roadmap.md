@@ -6,7 +6,7 @@
 - [x] Kontrollera startsida och frågor i iPhone- och Android-storlek.
 
 # Idag
-- [ ] Personliga måltider och portionsförslag utan kalorier.
-- [ ] Spara uppätna måltider och valda alternativ per dag.
-- [ ] Påminnelser på öppen sida med valbar framförhållning.
-- [ ] Länka Idag och kontrollera inloggat flöde på dator och mobil.
+- [x] Personliga måltider och portionsförslag utan kalorier.
+- [x] Spara uppätna måltider och valda alternativ per dag.
+- [x] Påminnelser på öppen sida med valbar framförhållning.
+- [x] Länka Idag och kontrollera inloggat flöde på dator och mobil.
