@@ -17,6 +17,7 @@
 - [x] Påminnelser utanför appen skjuts upp enligt Åsas önskemål; ingen push-tjänst ansluts.
 - [x] Testa sparade val på dator och mobil.
 # Fler matförslag
+- [ ] Välj proteinkälla först och få exakt två rätter för lunch och middag; testa sparande på mobil och dator.
 - [x] Fler kostanpassade måltidsförslag med varierade proteinkällor, kontrollerade med sparat val.
 - [x] Flera rätter att välja mellan för varje måltid, sparade per dag.
 - [x] Inköpslista från veckoplanen med avbockning.
