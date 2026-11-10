@@ -13,9 +13,9 @@ export const profileSchema = z.object({
   activity: z.enum(['low', 'moderate', 'high']),
   wake_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   sleep_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-  height_cm: z.preprocess(v => v === '' || v === undefined ? null : Number(v), z.number().int('Skriv längden i hela centimeter.').min(100, 'Längden behöver vara mellan 100 och 250 cm.').max(250, 'Längden behöver vara mellan 100 och 250 cm.').nullable()),
-  weight_kg: z.preprocess(v => v === '' || v === undefined ? null : Number(v), z.number().min(30, 'Vikten behöver vara mellan 30 och 300 kg.').max(300, 'Vikten behöver vara mellan 30 och 300 kg.').nullable()),
-  target_weight_kg: z.preprocess(v => v === '' || v === undefined ? null : Number(v), z.number().min(30, 'Målvikten behöver vara mellan 30 och 300 kg.').max(300, 'Målvikten behöver vara mellan 30 och 300 kg.').nullable()),
+  height_cm: z.preprocess(v => v === '' || v == null ? null : Number(v), z.number().int('Skriv längden i hela centimeter.').min(100, 'Längden behöver vara mellan 100 och 250 cm.').max(250, 'Längden behöver vara mellan 100 och 250 cm.').nullable()),
+  weight_kg: z.preprocess(v => v === '' || v == null ? null : Number(v), z.number().min(30, 'Vikten behöver vara mellan 30 och 300 kg.').max(300, 'Vikten behöver vara mellan 30 och 300 kg.').nullable()),
+  target_weight_kg: z.preprocess(v => v === '' || v == null ? null : Number(v), z.number().min(30, 'Målvikten behöver vara mellan 30 och 300 kg.').max(300, 'Målvikten behöver vara mellan 30 och 300 kg.').nullable()),
 });
 export type ProfileAnswers = z.infer<typeof profileSchema>;
 export const initialAnswers: ProfileAnswers = { display_name: '', goal: 'maintain', diet: 'mixed', allergies: '', activity: 'moderate', wake_time: '07:00', sleep_time: '22:00', height_cm: null, weight_kg: null, target_weight_kg: null };
