@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedIdagRouteImport } from './routes/_authenticated/idag'
+import { Route as AuthenticatedInkopRouteImport } from './routes/_authenticated/inkop'
 import { Route as AuthenticatedMinProfilRouteImport } from './routes/_authenticated/min-profil'
 import { Route as AuthenticatedVeckaRouteImport } from './routes/_authenticated/vecka'
 
@@ -41,6 +42,11 @@ const AuthenticatedIdagRoute = AuthenticatedIdagRouteImport.update({
   path: '/idag',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInkopRoute = AuthenticatedInkopRouteImport.update({
+  id: '/inkop',
+  path: '/inkop',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMinProfilRoute = AuthenticatedMinProfilRouteImport.update({
   id: '/min-profil',
   path: '/min-profil',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/idag': typeof AuthenticatedIdagRoute
+  '/inkop': typeof AuthenticatedInkopRoute
   '/min-profil': typeof AuthenticatedMinProfilRoute
   '/vecka': typeof AuthenticatedVeckaRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/idag': typeof AuthenticatedIdagRoute
+  '/inkop': typeof AuthenticatedInkopRoute
   '/min-profil': typeof AuthenticatedMinProfilRoute
   '/vecka': typeof AuthenticatedVeckaRoute
 }
@@ -75,15 +83,29 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/idag': typeof AuthenticatedIdagRoute
+  '/_authenticated/inkop': typeof AuthenticatedInkopRoute
   '/_authenticated/min-profil': typeof AuthenticatedMinProfilRoute
   '/_authenticated/vecka': typeof AuthenticatedVeckaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/reset-password' | '/idag' | '/min-profil' | '/vecka'
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/idag'
+    | '/inkop'
+    | '/min-profil'
+    | '/vecka'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/reset-password' | '/idag' | '/min-profil' | '/vecka'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/idag'
+    | '/inkop'
+    | '/min-profil'
+    | '/vecka'
   id:
     | '__root__'
     | '/'
@@ -91,6 +113,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/idag'
+    | '/_authenticated/inkop'
     | '/_authenticated/min-profil'
     | '/_authenticated/vecka'
   fileRoutesById: FileRoutesById
@@ -139,6 +162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIdagRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inkop': {
+      id: '/_authenticated/inkop'
+      path: '/inkop'
+      fullPath: '/inkop'
+      preLoaderRoute: typeof AuthenticatedInkopRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/min-profil': {
       id: '/_authenticated/min-profil'
       path: '/min-profil'
@@ -158,12 +188,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedIdagRoute: typeof AuthenticatedIdagRoute
+  AuthenticatedInkopRoute: typeof AuthenticatedInkopRoute
   AuthenticatedMinProfilRoute: typeof AuthenticatedMinProfilRoute
   AuthenticatedVeckaRoute: typeof AuthenticatedVeckaRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIdagRoute: AuthenticatedIdagRoute,
+  AuthenticatedInkopRoute: AuthenticatedInkopRoute,
   AuthenticatedMinProfilRoute: AuthenticatedMinProfilRoute,
   AuthenticatedVeckaRoute: AuthenticatedVeckaRoute,
 }
