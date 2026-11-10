@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       daily_meals: {
         Row: {
+          added: boolean
           choice: number
           custom_time: string | null
           custom_title: string | null
@@ -25,6 +26,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          added?: boolean
           choice?: number
           custom_time?: string | null
           custom_title?: string | null
@@ -34,6 +36,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          added?: boolean
           choice?: number
           custom_time?: string | null
           custom_title?: string | null
