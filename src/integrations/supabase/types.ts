@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_meals: {
+        Row: {
+          choice: number
+          day: string
+          eaten: boolean
+          slot: string
+          user_id: string
+        }
+        Insert: {
+          choice?: number
+          day: string
+          eaten?: boolean
+          slot: string
+          user_id: string
+        }
+        Update: {
+          choice?: number
+          day?: string
+          eaten?: boolean
+          slot?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_meals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           activity: string
@@ -23,6 +55,8 @@ export type Database = {
           display_name: string
           goal: string | null
           id: string
+          reminder_lead: number
+          reminders_enabled: boolean
           sleep_time: string
           wake_time: string
         }
@@ -34,6 +68,8 @@ export type Database = {
           display_name?: string
           goal?: string | null
           id: string
+          reminder_lead?: number
+          reminders_enabled?: boolean
           sleep_time?: string
           wake_time?: string
         }
@@ -45,6 +81,8 @@ export type Database = {
           display_name?: string
           goal?: string | null
           id?: string
+          reminder_lead?: number
+          reminders_enabled?: boolean
           sleep_time?: string
           wake_time?: string
         }
