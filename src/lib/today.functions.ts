@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { workoutSchema } from './profile-schema';
 import { daySchema, slotSchema, mealEditSchema } from './meal-plan';
+import { ownShoppingItemSchema } from './shopping-schema';
 
 export const getToday = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ day: daySchema }).parse(input))
@@ -82,14 +83,14 @@ export const toggleShoppingCheck = createServerFn({ method: 'POST' }).middleware
 export const getShoppingItems = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ week: daySchema }).parse(input))
   .handler(async ({ context, data }) => {
-    const { data: rows, error } = await context.supabase.from('shopping_items').select('item').eq('user_id', context.userId).eq('week_start', data.week).order('created_at');
+    const { data: rows, error } = await context.supabase.from('shopping_items').select('item, quantity').eq('user_id', context.userId).eq('week_start', data.week).order('created_at');
     if (error) throw new Error('Dina egna varor kunde inte hämtas.');
-    return rows.map(r => r.item);
+    return rows;
   });
 export const addShoppingItem = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ week: daySchema, item: z.string().trim().min(1).max(120) }).parse(input))
+  .inputValidator((input: unknown) => ownShoppingItemSchema.extend({ week: daySchema }).parse(input))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from('shopping_items').upsert({ user_id: context.userId, week_start: data.week, item: data.item }, { onConflict: 'user_id,week_start,item', ignoreDuplicates: true });
+    const { error } = await context.supabase.from('shopping_items').upsert({ user_id: context.userId, week_start: data.week, item: data.item, quantity: data.quantity }, { onConflict: 'user_id,week_start,item', ignoreDuplicates: true });
     if (error) throw new Error('Varan kunde inte läggas till. Försök igen.');
     return { saved: true };
   });
