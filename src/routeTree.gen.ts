@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedIdagRouteImport } from './routes/_authenticated/idag'
 import { Route as AuthenticatedMinProfilRouteImport } from './routes/_authenticated/min-profil'
 
 const IndexRoute = IndexRouteImport.update({
@@ -34,6 +35,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedIdagRoute = AuthenticatedIdagRouteImport.update({
+  id: '/idag',
+  path: '/idag',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMinProfilRoute = AuthenticatedMinProfilRouteImport.update({
   id: '/min-profil',
   path: '/min-profil',
@@ -44,12 +50,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/idag': typeof AuthenticatedIdagRoute
   '/min-profil': typeof AuthenticatedMinProfilRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/idag': typeof AuthenticatedIdagRoute
   '/min-profil': typeof AuthenticatedMinProfilRoute
 }
 export interface FileRoutesById {
@@ -58,19 +66,21 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/idag': typeof AuthenticatedIdagRoute
   '/_authenticated/min-profil': typeof AuthenticatedMinProfilRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/reset-password' | '/min-profil'
+  fullPaths: '/' | '/auth' | '/reset-password' | '/idag' | '/min-profil'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/reset-password' | '/min-profil'
+  to: '/' | '/auth' | '/reset-password' | '/idag' | '/min-profil'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/idag'
     | '/_authenticated/min-profil'
   fileRoutesById: FileRoutesById
 }
@@ -111,6 +121,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/idag': {
+      id: '/_authenticated/idag'
+      path: '/idag'
+      fullPath: '/idag'
+      preLoaderRoute: typeof AuthenticatedIdagRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/min-profil': {
       id: '/_authenticated/min-profil'
       path: '/min-profil'
@@ -122,10 +139,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedIdagRoute: typeof AuthenticatedIdagRoute
   AuthenticatedMinProfilRoute: typeof AuthenticatedMinProfilRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedIdagRoute: AuthenticatedIdagRoute,
   AuthenticatedMinProfilRoute: AuthenticatedMinProfilRoute,
 }
 
