@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { createMealPlan, dueReminders, localDay } from '@/lib/meal-plan';
+import { createMealPlan, dueReminders, localDay, plannedMeals, weekDays, mealEditSchema } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
+  it('uses the selected meal time and own food with a profile-based portion guide', () => {
+    const meals = plannedMeals({ ...initialAnswers, goal: 'gain' }, [{ slot: 'lunch', choice: 0, eaten: false, custom_title: 'Pasta med tofu', custom_time: '13:10' }]);
+    const lunch = meals.find(m => m.slot === 'lunch');
+    expect(lunch?.title).toBe('Pasta med tofu');
+    expect(lunch?.time).toBe('13:10');
+    expect(lunch?.offset).toBe(790);
+    expect(lunch?.portions[1]).toBe('2 kupade händer av ris, pasta, potatis eller motsvarande');
+  });
+  it('plans a full Monday to Sunday week across month boundaries', () => {
+    expect(weekDays('2026-11-01')).toEqual(['2026-10-26','2026-10-27','2026-10-28','2026-10-29','2026-10-30','2026-10-31','2026-11-01']);
+  });
+  it('rejects invalid edited times', () => {
+    expect(mealEditSchema.safeParse({ day: '2026-11-10', slot: 'lunch', custom_title: 'Pasta', custom_time: '25:00' }).success).toBe(false);
+  });
   it('offers larger portions for weight gain than weight loss', () => {
     expect(createMealPlan({ ...initialAnswers, goal: 'gain' })[2]?.portions[1]).toBe('2 kupade händer ris');
     expect(createMealPlan({ ...initialAnswers, goal: 'lose' })[2]?.portions[1]).toBe('1 kupad hand ris');
