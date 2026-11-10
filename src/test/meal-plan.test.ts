@@ -58,4 +58,12 @@ describe('Meal suggestions', () => {
   it('keeps local dates instead of UTC dates', () => {
     expect(localDay(new Date(2026,10,10,0,1))).toBe('2026-11-10');
   });
+});import { shoppingList as _sl } from '@/lib/meal-plan';
+describe('inköpslista', () => {
+  it('slår ihop samma ingrediens och listar egna rätter', () => {
+    const m = (ingredients: string, title = 'x') => ({ slot: 'lunch', label: '', time: '', offset: 0, title, ingredients, portions: [], image: null }) as any;
+    const r = _sl([m('Ris, kyckling'), m('ris, olja'), m('', 'Tacos')]);
+    expect(r.items).toEqual([{ name: 'Kyckling', count: 1 }, { name: 'Olja', count: 1 }, { name: 'Ris', count: 2 }]);
+    expect(r.custom).toEqual(['Tacos']);
+  });
 });

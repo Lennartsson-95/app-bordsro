@@ -106,3 +106,19 @@ function veganDrink(profile: ProfileAnswers) { return profile.diet === 'vegan' ?
 export function dueReminders(meals: Meal[], eaten: Set<MealSlot>, nowMinutes: number, lead: number) {
   return meals.filter(meal => !eaten.has(meal.slot) && nowMinutes >= meal.offset - lead && nowMinutes < meal.offset - lead + 2);
 }
+export type ShoppingItem = { name: string; count: number };
+/** Collects unique ingredients from planned meals; custom dishes without ingredients are listed by name. */
+export function shoppingList(meals: Meal[]): { items: ShoppingItem[]; custom: string[] } {
+  const map = new Map<string, ShoppingItem>();
+  const custom = new Set<string>();
+  for (const meal of meals) {
+    if (!meal.ingredients) { custom.add(meal.title); continue; }
+    for (const raw of meal.ingredients.split(',')) {
+      const part = raw.trim(); if (!part) continue;
+      const name = part.charAt(0).toUpperCase() + part.slice(1);
+      const key = name.toLowerCase();
+      const hit = map.get(key); if (hit) hit.count++; else map.set(key, { name, count: 1 });
+    }
+  }
+  return { items: [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'sv')), custom: [...custom] };
+}

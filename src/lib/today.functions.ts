@@ -63,3 +63,19 @@ export const deleteWorkout = createServerFn({ method: 'POST' }).middleware([requ
     if (error) throw new Error('Träningen kunde inte tas bort. Försök igen.');
     return { removed: true };
   });
+export const getShoppingChecks = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ week: daySchema }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { data: rows, error } = await context.supabase.from('shopping_checks').select('item').eq('user_id', context.userId).eq('week_start', data.week);
+    if (error) throw new Error('Inköpslistan kunde inte hämtas.');
+    return rows.map(r => r.item);
+  });
+export const toggleShoppingCheck = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ week: daySchema, item: z.string().trim().min(1).max(120), checked: z.boolean() }).parse(input))
+  .handler(async ({ context, data }) => {
+    const res = data.checked
+      ? await context.supabase.from('shopping_checks').upsert({ user_id: context.userId, week_start: data.week, item: data.item }, { onConflict: 'user_id,week_start,item', ignoreDuplicates: true })
+      : await context.supabase.from('shopping_checks').delete().eq('user_id', context.userId).eq('week_start', data.week).eq('item', data.item);
+    if (res.error) throw new Error('Kunde inte spara. Försök igen.');
+    return { saved: true };
+  });
