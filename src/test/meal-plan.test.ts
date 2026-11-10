@@ -50,7 +50,7 @@ describe('Meal suggestions', () => {
   });
   it('suggests more food on a hard training day', () => {
     expect(createMealPlan(initialAnswers, {}, 2).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
-    expect(createMealPlan(initialAnswers, {}, 1)[3]?.portions).toContain('Träningsdag: + 1 extra frukt');
+    expect(createMealPlan(initialAnswers, {}, 1).find(m => m.slot === "snack2")?.portions).toContain('Träningsdag: + 1 extra frukt');
   });
   it('suggests more food for a larger body', () => {
     expect(createMealPlan({ ...initialAnswers, weight_kg: 95, height_cm: 180 }).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
