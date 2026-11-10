@@ -43,6 +43,13 @@
       "when": 1794305733043,
       "tag": "0005_widen_meal_choice_range",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794307549379,
+      "tag": "0006_shopping_checks",
+      "breakpoints": true
     }
   ]
 }
