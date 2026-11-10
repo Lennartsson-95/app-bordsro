@@ -1,0 +1,1 @@
+ALTER TABLE public.shopping_items ADD COLUMN quantity text NOT NULL DEFAULT '' CHECK (char_length(quantity) <= 80);

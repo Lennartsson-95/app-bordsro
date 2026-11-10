@@ -133,18 +133,21 @@ export type Database = {
         Row: {
           created_at: string
           item: string
+          quantity: string
           user_id: string
           week_start: string
         }
         Insert: {
           created_at?: string
           item: string
+          quantity?: string
           user_id: string
           week_start: string
         }
         Update: {
           created_at?: string
           item?: string
+          quantity?: string
           user_id?: string
           week_start?: string
         }

@@ -21,3 +21,4 @@
 - [x] Inköpslista från veckoplanen med avbockning.
 - [x] Egna varor som läggs till och bockas av i inköpslistan, sparade per vecka.
 - [x] Menyn får plats på små mobilskärmar utan sidledes skroll.
+- [x] Valfri mängd för egna inköpsvaror, sparad och kontrollerad efter omladdning.

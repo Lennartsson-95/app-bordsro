@@ -9,6 +9,7 @@ import { addShoppingItem, getShoppingChecks, getShoppingItems, getWeek, removeSh
 import { localDay, plannedMeals, prepareOwnItem, shiftDay, shoppingList, weekDays } from '@/lib/meal-plan';
 import { profileSchema } from '@/lib/profile-schema';
 import { pageHead } from '@/lib/page-head';
+import { ownShoppingItemSchema, type OwnShoppingItem } from '@/lib/shopping-schema';
 
 const weekQuery = (start: string, end: string) => queryOptions({ queryKey: ['week', start], queryFn: () => getWeek({ data: { start, end } }) });
 const checksQuery = (week: string) => queryOptions({ queryKey: ['shopping', week], queryFn: () => getShoppingChecks({ data: { week } }) });
@@ -16,18 +17,19 @@ const ownItemsQuery = (week: string) => queryOptions({ queryKey: ['shopping-item
 
 export const Route = createFileRoute('/_authenticated/inkop')({
   head: () => pageHead('Inköpslista – Bordsro', 'Alla ingredienser för veckans måltider samlade i en lista du kan bocka av – och egna varor du lägger till själv.'),
-  loader: ({ context }) => { const d = weekDays(localDay(new Date())); return Promise.all([context.queryClient.ensureQueryData(weekQuery(d[0]!, d[6]!)), context.queryClient.ensureQueryData(checksQuery(d[0]!)), context.queryClient.ensureQueryData(ownItemsQuery(d[0]!))]); },
+  loader: ({ context }) => { const d = weekDays(localDay(new Date())); const first = d[0]; const last = d[6]; if (!first || !last) throw new Error('Veckan kunde inte hämtas.'); return Promise.all([context.queryClient.ensureQueryData(weekQuery(first, last)), context.queryClient.ensureQueryData(checksQuery(first)), context.queryClient.ensureQueryData(ownItemsQuery(first))]); },
   component: ShoppingPage,
 });
 
 function ShoppingPage() {
   const [day, setDay] = useState(() => localDay(new Date()));
-  const days = weekDays(day); const first = days[0]!; const last = days[6]!;
+  const days = weekDays(day); const first = days[0] ?? day; const last = days[6] ?? day;
   const { data } = useSuspenseQuery(weekQuery(first, last));
   const { data: checked } = useSuspenseQuery(checksQuery(first));
   const { data: ownItems } = useSuspenseQuery(ownItemsQuery(first));
   const qc = useQueryClient();
   const [draft, setDraft] = useState('');
+  const [quantity, setQuantity] = useState('');
   const [note, setNote] = useState('');
   const toggle = useMutation({
     mutationFn: (v: { item: string; checked: boolean }) => toggleShoppingCheck({ data: { week: first, ...v } }),
@@ -35,14 +37,14 @@ function ShoppingPage() {
     onSettled: () => qc.invalidateQueries({ queryKey: ['shopping', first] }),
   });
   const add = useMutation({
-    mutationFn: (item: string) => addShoppingItem({ data: { week: first, item } }),
-    onMutate: item => qc.setQueryData<string[]>(['shopping-items', first], old => [...(old ?? []), item]),
+    mutationFn: (item: OwnShoppingItem) => addShoppingItem({ data: { week: first, ...item } }),
+    onSuccess: () => { setDraft(''); setQuantity(''); },
     onSettled: () => qc.invalidateQueries({ queryKey: ['shopping-items', first] }),
   });
   const remove = useMutation({
     mutationFn: (item: string) => removeShoppingItem({ data: { week: first, item } }),
     onMutate: item => {
-      qc.setQueryData<string[]>(['shopping-items', first], old => (old ?? []).filter(i => i !== item));
+      qc.setQueryData<OwnShoppingItem[]>(['shopping-items', first], old => (old ?? []).filter(i => i.item !== item));
       qc.setQueryData<string[]>(['shopping', first], old => (old ?? []).filter(i => i !== item));
     },
     onSettled: () => Promise.all([qc.invalidateQueries({ queryKey: ['shopping-items', first] }), qc.invalidateQueries({ queryKey: ['shopping', first] })]),
@@ -53,17 +55,19 @@ function ShoppingPage() {
   const { items, custom } = shoppingList(meals);
   const done = new Set(checked);
   const format = (v: string) => new Date(`${v}T12:00:00`).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
-  const all = [...items.map(i => i.name), ...custom, ...ownItems];
+  const all = [...items.map(i => i.name), ...custom, ...ownItems.map(i => i.item)];
   const bought = all.filter(name => done.has(name)).length;
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const { item, duplicate } = prepareOwnItem(draft, all);
     if (!item) return;
     if (duplicate) { setNote(`${item} finns redan på listan.`); return; }
-    setNote(''); setDraft(''); add.mutate(item);
+    const parsed = ownShoppingItemSchema.safeParse({ item, quantity });
+    if (!parsed.success) return;
+    setNote(''); add.mutate(parsed.data);
   }
   const row = (item: string, note?: string, removable = false) => <li key={item} className="flex items-center gap-1">
-    <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-3"><Checkbox checked={done.has(item)} onCheckedChange={c => toggle.mutate({ item, checked: c === true })} /><span className={done.has(item) ? 'text-muted-foreground line-through' : ''}>{item}</span>{note && <span className="ml-auto shrink-0 text-xs text-muted-foreground">{note}</span>}</label>
+    <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-3"><Checkbox aria-label={`Handlat ${item}`} checked={done.has(item)} onCheckedChange={c => toggle.mutate({ item, checked: c === true })} /><span className={`min-w-0 break-words ${done.has(item) ? 'text-muted-foreground line-through' : ''}`}>{item}</span>{note && <span className="ml-auto max-w-[40%] break-words text-right text-xs text-muted-foreground">{note}</span>}</label>
     {removable && <Button size="icon" variant="ghost" className="shrink-0" aria-label={`Ta bort ${item}`} onClick={() => remove.mutate(item)}><X className="size-4" /></Button>}
   </li>;
   return <main className="mx-auto max-w-2xl px-5 pb-12 pt-8 sm:px-10 sm:pt-12">
@@ -73,13 +77,14 @@ function ShoppingPage() {
     <ul className="mt-4 divide-y divide-border border-y border-border">{items.map(i => row(i.name, i.count > 1 ? `${i.count} måltider` : undefined))}</ul>
     <h2 className="mt-8 font-display text-xl">Egna rätter och dina varor</h2>
     <p className="text-sm text-muted-foreground">Lägg till varorna du behöver till dina egna rätter och bocka av dem när du handlat.</p>
-    <form onSubmit={submit} className="mt-4 flex flex-wrap items-start gap-2">
-      <div className="min-w-0 flex-1"><label htmlFor="own-item" className="sr-only">Lägg till en vara</label><Input id="own-item" value={draft} onChange={e => { setDraft(e.target.value); setNote(''); }} onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }} placeholder="T.ex. havregryn, fisk, äpplen" maxLength={120} disabled={add.isPending} /></div>
+    <form onSubmit={submit} className="mt-4 grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto]">
+      <div className="min-w-0"><label htmlFor="own-item" className="mb-1 block text-sm">Vara</label><Input id="own-item" value={draft} onChange={e => { setDraft(e.target.value); setNote(''); }} placeholder="T.ex. havregryn, fisk, äpplen" maxLength={120} disabled={add.isPending} /></div>
+      <div className="min-w-0"><label htmlFor="own-quantity" className="mb-1 block text-sm">Mängd (valfritt)</label><Input id="own-quantity" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="T.ex. 2 st eller en påse" maxLength={80} disabled={add.isPending} /></div>
       <Button type="submit" disabled={!draft.trim() || add.isPending}><Plus />Lägg till</Button>
     </form>
     {note && <p role="alert" className="mt-2 text-sm text-muted-foreground">{note}</p>}
     {add.isError && <p role="alert" className="mt-2 text-sm text-destructive">Varan kunde inte läggas till. Försök igen.</p>}
-    <ul className="mt-3 divide-y divide-border border-y border-border">{custom.map(c => row(c, 'egen rätt'))}{ownItems.map(i => row(i, undefined, true))}</ul>
+    <ul className="mt-3 divide-y divide-border border-y border-border">{custom.map(c => row(c, 'egen rätt'))}{ownItems.map(i => row(i.item, i.quantity || undefined, true))}</ul>
     {custom.length === 0 && ownItems.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Inga egna varor ännu. Skriv in det du behöver ovan.</p>}
   </main>;
 }

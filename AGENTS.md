@@ -35,3 +35,4 @@ use the editor.
 - Generate meal suggestions and date ranges in a shared pure meal-plan module; persist per-user/date choices, eaten flags, custom food names and times, keeping suggested portions derived from the profile rather than stored.
 - Use one shared meal editor for Today and Week so time and food edits use the same authenticated save path and portion rules.
 - Keep meal reminders in the open Today page, persisted as profile preferences with local-clock scheduling; background push is not enabled and must not be implied.
+- Keep optional own-item shopping quantities separate from item names and validate them through a shared schema; quantities must not change deduplication or check-off identity.
