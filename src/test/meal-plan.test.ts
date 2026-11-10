@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, prepareOwnItem, weekDays, mealEditSchema, proteinGroups } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
+  it('shows only meals the user has added, and none on an empty day', () => {
+    expect(plannedMeals(initialAnswers, [])).toEqual([]);
+    const meals = plannedMeals(initialAnswers, [{ slot: 'lunch', choice: 0, eaten: false, custom_title: null, custom_time: null, added: true }, { slot: 'dinner', choice: 0, eaten: false, custom_title: null, custom_time: null, added: false }]);
+    expect(meals.map(m => m.slot)).toEqual(['lunch']);
+  });
   it('uses the selected meal time and own food with a profile-based portion guide', () => {
     const meals = plannedMeals({ ...initialAnswers, goal: 'gain' }, [{ slot: 'lunch', choice: 0, eaten: false, custom_title: 'Pasta med tofu', custom_time: '13:10' }]);
     const lunch = meals.find(m => m.slot === 'lunch');

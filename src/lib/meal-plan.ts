@@ -8,7 +8,7 @@ export function localDay(date: Date) { return `${date.getFullYear()}-${String(da
 export function minutes(time: string) { const [h = 0, m = 0] = time.split(':').map(Number); return h * 60 + m; }
 export function clock(total: number) { const normalized = ((Math.round(total) % 1440) + 1440) % 1440; return `${String(Math.floor(normalized/60)).padStart(2,'0')}:${String(normalized%60).padStart(2,'0')}`; }
 export type Meal = { slot: MealSlot; label: string; time: string; offset: number; title: string; ingredients: string; portions: string[]; image: 'breakfast' | 'lunch' | null };
-export type MealEntry = { slot: string; choice: number; eaten: boolean; custom_title: string | null; custom_time: string | null };
+export type MealEntry = { slot: string; choice: number; eaten: boolean; custom_title: string | null; custom_time: string | null; added?: boolean };
 export const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Välj en giltig tid.');
 export const mealChoiceSchema = z.number().int().min(0).max(10);
 export const mealEditSchema = z.object({ day: daySchema, slot: slotSchema, custom_title: z.string().trim().max(160, 'Använd högst 160 tecken.').nullable(), custom_time: timeSchema.nullable(), choice: mealChoiceSchema.optional() });
@@ -109,7 +109,7 @@ export function proteinGroups(profile: ProfileAnswers, slot: MealSlot): ProteinG
   return groups.map(({ indices, ...group }) => ({ ...group, dishes: indices.flatMap(choice => { const dish = dishes[choice]; return dish ? [{ dish, choice }] : []; }) }));
 }
 export function plannedMeals(profile: ProfileAnswers, entries: MealEntry[], training: Training = 0): Meal[] {
-  return createMealPlan(profile, Object.fromEntries(entries.map(entry => [entry.slot, entry.choice])), training).map(meal => {
+  return createMealPlan(profile, Object.fromEntries(entries.map(entry => [entry.slot, entry.choice])), training).filter(meal => entries.some(e => e.slot === meal.slot && e.added !== false)).map(meal => {
     const entry = entries.find(e => e.slot === meal.slot);
     const time = entry?.custom_time ?? meal.time;
     let offset = minutes(time);

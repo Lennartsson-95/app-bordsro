@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useQueryClient } from '@tanstack/react-query';
-import { Beef, Check, ChevronRight, Clock, Drumstick, Fish, Leaf, RefreshCw, Save, Utensils } from 'lucide-react';
+import { Plus, Trash2, Beef, Check, ChevronRight, Clock, Drumstick, Fish, Leaf, RefreshCw, Save, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { editMeal, updateMeal } from '@/lib/today.functions';
-import { dishOptions, mealEditSchema, plannedMeals, proteinGroups, type ProteinCategory, type Meal, type MealEntry } from '@/lib/meal-plan';
+import { editMeal, setMealAdded, updateMeal } from '@/lib/today.functions';
+import { createMealPlan, dishOptions, mealEditSchema, plannedMeals, proteinGroups, type ProteinCategory, type Meal, type MealEntry } from '@/lib/meal-plan';
 import type { ProfileAnswers } from '@/lib/profile-schema';
 import breakfastImage from '@/assets/frukost-havre.jpg';
 import lunchImage from '@/assets/lunch-linser.jpg';
@@ -21,6 +21,14 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   const [error, setError] = useState('');
   const save = useServerFn(editMeal);
   const mark = useServerFn(updateMeal);
+  const setAdded = useServerFn(setMealAdded);
+  const available = createMealPlan(profile, {}, training).filter(m => !meals.some(x => x.slot === m.slot));
+  async function setSlot(slot: Meal['slot'], added: boolean) {
+    setBusy(true); setError('');
+    try { await setAdded({ data: { day, slot, added } }); await refresh(); if (!added) setSelected(null); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Måltiden kunde inte sparas.'); }
+    finally { setBusy(false); }
+  }
   const queryClient = useQueryClient();
   const groups = selected ? proteinGroups(profile, selected.slot) : [];
   const suggestions = selected ? groups.length ? groups.find(group => group.category === protein)?.dishes ?? [] : dishOptions(profile)[selected.slot].map((dish, choice) => ({ dish, choice })) : [];
@@ -66,6 +74,8 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
         </div>
       </article>;
     })}</div>
+    {meals.length === 0 && <p className="text-sm text-muted-foreground">Inga måltider tillagda än.</p>}
+    {available.length > 0 && <div role="group" aria-label="Lägg till måltid" className="mt-3 flex flex-wrap gap-2">{available.map(m => <Button key={m.slot} size="sm" variant="outline" disabled={busy} onClick={() => setSlot(m.slot, true)} aria-label={`Lägg till ${m.label.toLowerCase()}`}><Plus />{m.label}</Button>)}</div>}
     <Dialog open={selected !== null} onOpenChange={v => { if (!v && !busy) setSelected(null); }}>
       <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg">
         <DialogHeader><DialogTitle className="pr-6 font-display text-2xl">{selected?.label}</DialogTitle><DialogDescription>{new Date(`${day}T12:00:00`).toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })}</DialogDescription></DialogHeader>
@@ -79,7 +89,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
           })}</div></section>}
           <section className="border-y border-border py-4"><h3 className="font-display text-lg">Förslag på mängd</h3><ul className="mt-3 space-y-2 text-sm leading-relaxed">{(preview?.portions ?? selected.portions).map(p => <li key={p} className="flex gap-2"><span className="mt-2 size-1 shrink-0 rounded-full bg-primary" />{p}</li>)}</ul><p className="mt-3 text-xs leading-relaxed text-muted-foreground">{title.trim() ? 'För egen mat gäller en generell portionsguide för måltiden, inte en beräkning av maträtten. ' : ''}Anpassa efter hunger och mättnad. Kontrollera alltid att maten passar dina allergier.</p></section>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <div className="flex flex-wrap justify-between gap-2"><Button variant="ghost" type="button" disabled={busy} onClick={() => submit(true)}><RefreshCw />Återställ förslag</Button><Button type="submit" disabled={busy}><Save />{busy ? 'Sparar…' : 'Spara måltid'}</Button></div>
+          <div className="flex flex-wrap justify-between gap-2"><div className="flex flex-wrap gap-2"><Button variant="ghost" type="button" disabled={busy} onClick={() => submit(true)}><RefreshCw />Återställ förslag</Button><Button variant="ghost" type="button" disabled={busy} className="text-destructive" onClick={() => setSlot(selected.slot, false)}><Trash2 />Ta bort</Button></div><Button type="submit" disabled={busy}><Save />{busy ? 'Sparar…' : 'Spara måltid'}</Button></div>
         </form></>}
       </DialogContent>
     </Dialog>
