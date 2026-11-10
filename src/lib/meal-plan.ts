@@ -23,7 +23,14 @@ export type Training = 0 | 1 | 2;
 export function portionLevel(profile: ProfileAnswers, training: Training = 0) {
   const base = profile.goal === 'lose' ? 0 : profile.goal === 'gain' ? 2 : 1;
   const big = (profile.weight_kg ?? 0) >= 90 || (profile.height_cm ?? 0) >= 185 ? 1 : 0;
-  return Math.min(3, base + (profile.activity === 'high' ? 1 : 0) + big + (training === 2 ? 1 : 0));
+  return Math.max(0, Math.min(3, base + (profile.activity === 'high' ? 1 : 0) + big + (training === 2 ? 1 : 0) + lifeStep(profile)));
+}
+/** Optional age and sex nudges: age moves the amount down when older, and sex only counts while no body measurements are given. */
+function lifeStep(profile: ProfileAnswers) {
+  const age = profile.age ?? 0;
+  const ageStep = age >= 65 ? -1 : age > 0 && age < 20 ? 1 : 0;
+  const knowsBody = profile.weight_kg != null || profile.height_cm != null;
+  return ageStep + (!knowsBody && profile.sex === 'man' ? 1 : 0);
 }
 export function carbPortion(profile: ProfileAnswers, training: Training = 0) { return ['1 kupad hand', '1–2 kupade händer', '2 kupade händer', '2–3 kupade händer'][portionLevel(profile, training)] ?? '1–2 kupade händer'; }
 function trainingExtra(slot: MealSlot, training: Training) {
