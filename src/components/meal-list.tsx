@@ -15,6 +15,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   const [selected, setSelected] = useState<Meal | null>(null);
   const [title, setTitle] = useState('');
   const [time, setTime] = useState('');
+  const [choice, setChoice] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const save = useServerFn(editMeal);
@@ -22,7 +23,14 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   const queryClient = useQueryClient();
   const preview = selected ? plannedMeals(profile, [...entries.filter(e => e.slot !== selected.slot), { slot: selected.slot, choice: entries.find(e => e.slot === selected.slot)?.choice ?? 0, eaten: false, custom_title: title.trim() || null, custom_time: null }], training).find(m => m.slot === selected.slot) : null;
   async function refresh() { await Promise.all([queryClient.invalidateQueries({ queryKey: ['today'] }), queryClient.invalidateQueries({ queryKey: ['week'] })]); }
-  function open(meal: Meal) { setSelected(meal); setTitle(entries.find(e => e.slot === meal.slot)?.custom_title ?? ''); setTime(meal.time); setError(''); }
+  function open(meal: Meal) { setSelected(meal); const entry = entries.find(e => e.slot === meal.slot); setTitle(entry?.custom_title ?? ''); setTime(meal.time); setChoice(entry?.choice ?? 0); setError(''); }
+  async function choose(index: number) {
+    if (!selected) return;
+    setChoice(index); setTitle(''); setBusy(true); setError('');
+    try { await save({ data: { day, slot: selected.slot, custom_title: null, custom_time: time, choice: index } }); await refresh(); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Förslaget kunde inte sparas.'); }
+    finally { setBusy(false); }
+  }
   async function submit(reset = false) {
     if (!selected) return;
     const result = mealEditSchema.safeParse({ day, slot: selected.slot, custom_title: reset ? null : title.trim() || null, custom_time: reset ? null : time });
