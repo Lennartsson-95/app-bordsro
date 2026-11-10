@@ -1,0 +1,43 @@
+import { useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, Leaf, Minus, TrendingDown, TrendingUp, LoaderCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { goalChoices, initialAnswers, profileSchema, type ProfileAnswers } from '@/lib/profile-schema';
+import { AuthForm } from './auth-form';
+
+const dietOptions = [{ value: 'mixed', label: 'Jag äter det mesta' }, { value: 'vegetarian', label: 'Vegetariskt' }, { value: 'vegan', label: 'Veganskt' }, { value: 'pescatarian', label: 'Vegetariskt & fisk' }] as const;
+const activityOptions = [{ value: 'low', label: 'Lite rörelse', detail: 'Mest stillasittande' }, { value: 'moderate', label: 'En del rörelse', detail: 'Promenader eller träning ibland' }, { value: 'high', label: 'Mycket rörelse', detail: 'Aktiv vardag eller regelbunden träning' }] as const;
+export function Onboarding({ existing, onSave }: { existing?: ProfileAnswers; onSave?: (answers: ProfileAnswers) => Promise<void> }) {
+  const [answers, setAnswers] = useState(existing ?? initialAnswers);
+  const [selected, setSelected] = useState(Boolean(existing));
+  const [step, setStep] = useState(0);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const steps = ['Ditt mål', 'Om dig', 'Din vardag', onSave ? 'Spara' : 'Ditt konto'];
+  function update<K extends keyof ProfileAnswers>(key: K, value: ProfileAnswers[K]) { setAnswers(prev => ({ ...prev, [key]: value })); }
+  async function next() {
+    setError('');
+    if (step === 1 && !answers.display_name.trim()) { setError('Skriv ditt namn för att fortsätta.'); return; }
+    if (step === 2) {
+      if (!profileSchema.safeParse(answers).success) { setError('Kontrollera att alla frågor är besvarade.'); return; }
+      if (onSave) {
+        setBusy(true);
+        try { await onSave(profileSchema.parse(answers)); setStep(3); }
+        catch (err) { setError(err instanceof Error ? err.message : 'Dina svar kunde inte sparas.'); }
+        finally { setBusy(false); }
+        return;
+      }
+    }
+    setStep(prev => prev + 1);
+  }
+  return <section className="mx-auto w-full max-w-3xl px-5 pb-12 pt-8 sm:px-10 sm:pt-12">
+    <ol className="mb-10 flex items-center justify-between gap-2" aria-label="Dina steg">{steps.map((label, i) => <li key={label} aria-current={step === i ? 'step' : undefined} className={`flex items-center gap-2 text-xs sm:text-sm ${i <= step ? 'text-primary' : 'text-muted-foreground'}`}><span className={`flex size-6 shrink-0 items-center justify-center rounded-full border ${i <= step ? 'border-primary bg-secondary' : 'border-border'}`}>{i < step ? <Check className="size-3" /> : i + 1}</span><span className="hidden sm:inline">{label}</span></li>)}</ol>
+    {step === 0 && <><p className="mb-3 text-xs font-semibold uppercase text-primary">En början i din egen takt</p><h1 className="font-display text-4xl sm:text-5xl">Vad är ditt mål?</h1><p className="mb-8 mt-4 text-muted-foreground">Välj det som känns rätt för dig just nu.</p><div role="radiogroup" aria-label="Ditt mål" className="space-y-3">{goalChoices.map((goal, i) => { const Icon = [TrendingDown, Minus, TrendingUp][i] ?? Leaf; const checked = selected && answers.goal === goal.value; return <Button key={goal.value} role="radio" aria-checked={checked} variant="outline" onClick={() => { update('goal', goal.value); setSelected(true); }} className={`goal-option flex h-auto min-h-24 w-full justify-start gap-4 whitespace-normal p-5 text-left ${checked ? 'border-primary bg-secondary' : 'bg-card hover:bg-secondary/40'}`}><span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-secondary text-primary"><Icon className="size-5" /></span><span className="flex-1"><span className="block text-base font-semibold">{goal.title}</span><span className="mt-1 block text-sm font-normal text-muted-foreground">{goal.detail}</span></span><span className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${checked ? 'border-primary bg-primary text-primary-foreground' : 'border-input'}`}>{checked && <Check className="size-3" />}</span></Button>; })}</div><p className="mt-5 text-sm text-muted-foreground">Du kan alltid ändra ditt mål senare.</p></>}
+    {step === 1 && <><p className="mb-3 text-xs font-semibold uppercase text-primary">Lite om dig</p><h1 className="font-display text-4xl">Vad trivs du med att äta?</h1><div className="mt-8 space-y-6"><label className="block space-y-2 text-sm font-medium">Vad heter du?<Input autoComplete="given-name" maxLength={80} value={answers.display_name} onChange={e => update('display_name', e.target.value)} placeholder="Ditt förnamn" className="h-12 bg-card" /></label><fieldset><legend className="mb-3 text-sm font-medium">Hur äter du oftast?</legend><div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{dietOptions.map(option => <label key={option.value} className="flex cursor-pointer items-center gap-3 rounded-md border border-input bg-card p-4 text-sm"><input type="radio" name="diet" value={option.value} checked={answers.diet === option.value} onChange={() => update('diet', option.value)} className="size-4 accent-primary" />{option.label}</label>)}</div></fieldset><label className="block space-y-2 text-sm font-medium">Allergier eller något du undviker <span className="font-normal text-muted-foreground">(valfritt)</span><Input maxLength={500} value={answers.allergies} onChange={e => update('allergies', e.target.value)} placeholder="Till exempel nötter eller laktos" className="h-12 bg-card" /></label></div></>}
+    {step === 2 && <><p className="mb-3 text-xs font-semibold uppercase text-primary">Din måltidsrytm</p><h1 className="font-display text-4xl">Hur ser din vardag ut?</h1><div className="mt-8 space-y-7"><fieldset><legend className="mb-3 text-sm font-medium">Hur mycket rör du dig vanligtvis?</legend><div className="space-y-3">{activityOptions.map(option => <label key={option.value} className="flex cursor-pointer items-center gap-3 rounded-md border border-input bg-card p-4 text-sm"><input type="radio" name="activity" value={option.value} checked={answers.activity === option.value} onChange={() => update('activity', option.value)} className="size-4 accent-primary" /><span><span className="block font-medium">{option.label}</span><span className="text-muted-foreground">{option.detail}</span></span></label>)}</div></fieldset><div className="grid grid-cols-2 gap-5"><label className="block space-y-2 text-sm font-medium">När vaknar du?<Input type="time" value={answers.wake_time} onChange={e => update('wake_time', e.target.value)} className="h-12 bg-card" /></label><label className="block space-y-2 text-sm font-medium">När lägger du dig?<Input type="time" value={answers.sleep_time} onChange={e => update('sleep_time', e.target.value)} className="h-12 bg-card" /></label></div></div></>}
+    {step === 3 && (onSave ? <div className="py-8 text-center"><Check className="mx-auto mb-4 size-10 text-primary" /><h1 className="font-display text-4xl">Dina svar är sparade</h1></div> : <AuthForm answers={answers} defaultSignup />)}
+    {error && <p role="alert" className="mt-5 text-sm text-destructive">{error}</p>}
+    {step < 3 && <div className="mt-9 flex items-center justify-between border-t border-border pt-6">{step > 0 ? <Button variant="ghost" onClick={() => setStep(s => s - 1)} disabled={busy}><ArrowLeft />Tillbaka</Button> : <span className="text-xs text-muted-foreground">Steg 1 av 4</span>}<Button disabled={(step === 0 && !selected) || busy} className="h-12 px-7" onClick={next}>{busy ? <LoaderCircle className="animate-spin" /> : <>{step === 2 && onSave ? 'Spara mina svar' : 'Fortsätt'}<ArrowRight /></>}</Button></div>}
+    {step === 3 && !onSave && <Button variant="ghost" className="mt-5" onClick={() => setStep(2)}><ArrowLeft />Tillbaka till mina svar</Button>}
+  </section>;
+}
