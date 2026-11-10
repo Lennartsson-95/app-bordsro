@@ -130,7 +130,7 @@ export function createMealPlan(profile: ProfileAnswers, choices: Partial<Record<
   let end = minutes(profile.sleep_time) - 60;
   if (end <= start) end += 1440;
   const extra = profile.goal === 'gain';
-  const slots: MealSlot[] = extra ? ['breakfast','snack1','lunch','snack2','dinner','evening'] : ['breakfast','snack1','lunch','snack2','dinner'];
+  const slots: MealSlot[] = ['breakfast','lunch','snack2','dinner','evening'];
   const options = dishOptions(profile);
   return slots.map((slot, index) => {
     const dishes = options[slot];
