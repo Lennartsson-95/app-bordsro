@@ -21,8 +21,8 @@ export type ProfileAnswers = z.infer<typeof profileSchema>;
 export const initialAnswers: ProfileAnswers = { display_name: '', goal: 'maintain', diet: 'mixed', allergies: '', activity: 'moderate', wake_time: '07:00', sleep_time: '22:00', height_cm: null, weight_kg: null, target_weight_kg: null };
 export const workoutSchema = z.object({ kind: z.string().trim().min(1, 'Skriv vad du tränade.').max(80), minutes: z.number().int().min(5, 'Minst 5 minuter.').max(600), intensity: z.enum(['light', 'hard']) });
 /** 0 = no training, 1 = light training, 2 = hard or long training (60+ min). */
-export function trainingLevel(workouts: { minutes: number; intensity: string }[]): 0 | 1 | 2 {
-  if (!workouts.length) return 0;
+export function trainingLevel(workouts: { minutes: number; intensity: string }[] = []): 0 | 1 | 2 {
+  if (!workouts?.length) return 0;
   const total = workouts.reduce((s, w) => s + w.minutes, 0);
   return workouts.some(w => w.intensity === 'hard') || total >= 60 ? 2 : 1;
 }
