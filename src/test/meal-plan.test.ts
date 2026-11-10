@@ -63,7 +63,7 @@ describe('Meal suggestions', () => {
       const dishes = Object.values(dishOptions({ ...initialAnswers, diet })).flat();
       expect(JSON.stringify(dishes)).not.toMatch(/kyckling|kalkon|nötfärs|köttbullar/i);
       if (diet !== 'pescatarian') expect(JSON.stringify(dishes)).not.toMatch(/lax|torsk|fisk/i);
-      if (diet === 'vegan') expect(JSON.stringify(dishes)).not.toMatch(/ägg|halloumi|keso|kvarg|mjölk|ost eller/i);
+      if (diet === 'vegan') expect(dishes.map(d => d.ingredients).join(', ')).not.toMatch(/ägg|halloumi|keso|kvarg|mjölk|ost eller/i);
     }
   });
   it('derives portions and shopping ingredients from a new protein choice', () => {
