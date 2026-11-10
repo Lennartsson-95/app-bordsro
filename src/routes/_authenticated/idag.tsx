@@ -52,9 +52,8 @@ function TodayPage() {
     finally { setBusy(null); }
   }
   if (!profile.success || !data.profile.completed) return <main className="mx-auto max-w-xl px-6 py-12"><h1 className="font-display text-4xl">Dina måltider börjar med dig</h1><p className="mt-4 text-muted-foreground">Besvara frågorna om dina matvanor och din vardag först.</p><Button asChild className="mt-6"><Link to="/min-profil">Till mina frågor</Link></Button></main>;
-  const goal = goalChoices.find(g=>g.value===profile.data.goal);
   return <main className="mx-auto max-w-6xl px-5 pb-12 pt-8 sm:px-10 sm:pt-12">
-    <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="mb-3 text-sm capitalize text-muted-foreground">{now.toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'long'})}</p><h1 className="font-display text-4xl sm:text-5xl">Idag, {data.profile.display_name}</h1><p className="mt-3 text-muted-foreground">En måltid i taget.</p></div><div className="flex items-center gap-2 text-sm text-primary"><Leaf className="size-4" />{goal?.title}</div></div>
+    <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="mb-3 text-sm capitalize text-muted-foreground">{now.toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'long'})}</p><h1 className="font-display text-4xl sm:text-5xl">Idag, {data.profile.display_name}</h1><p className="mt-3 text-muted-foreground">En måltid i taget.</p></div></div>
     {reminder && <div role="alert" className="mt-6 flex items-start gap-3 rounded-md border border-primary bg-secondary p-5"><BellRing className="mt-1 shrink-0 text-primary" /><div className="flex-1"><p className="font-semibold">Dags för {reminder.label.toLowerCase()}</p><p className="mt-1 text-sm">{reminder.title}</p></div><Button variant="ghost" size="icon" title="Stäng påminnelsen" aria-label="Stäng påminnelsen" onClick={()=>setReminder(null)}><X /></Button></div>}
     {error && <p role="alert" className="mt-5 text-sm text-destructive">{error}</p>}
     <div className="mt-6"><Button variant="outline" asChild><Link to="/vecka">Planera veckan</Link></Button></div>
