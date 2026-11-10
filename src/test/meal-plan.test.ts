@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, prepareOwnItem, weekDays, mealEditSchema, proteinGroups } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
+  it('offers exactly Frukost, Mellanmål, Lunch, Middag and Kvällsmål to add', () => {
+    expect(createMealPlan(initialAnswers).map(m => m.label).sort()).toEqual(['Frukost','Kvällsmål','Lunch','Mellanmål','Middag']);
+  });
   it('shows only meals the user has added, and none on an empty day', () => {
     expect(plannedMeals(initialAnswers, [])).toEqual([]);
     const meals = plannedMeals(initialAnswers, [{ slot: 'lunch', choice: 0, eaten: false, custom_title: null, custom_time: null, added: true }, { slot: 'dinner', choice: 0, eaten: false, custom_title: null, custom_time: null, added: false }]);
@@ -22,15 +25,15 @@ describe('Meal suggestions', () => {
     expect(mealEditSchema.safeParse({ day: '2026-11-10', slot: 'lunch', custom_title: 'Pasta', custom_time: '25:00' }).success).toBe(false);
   });
   it('offers larger portions for weight gain than weight loss', () => {
-    expect(createMealPlan({ ...initialAnswers, goal: 'gain' })[2]?.portions[1]).toBe('2 kupade händer ris');
-    expect(createMealPlan({ ...initialAnswers, goal: 'lose' })[2]?.portions[1]).toBe('1 kupad hand ris');
+    expect(createMealPlan({ ...initialAnswers, goal: 'gain' }).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
+    expect(createMealPlan({ ...initialAnswers, goal: 'lose' }).find(m => m.slot === "lunch")?.portions[1]).toBe('1 kupad hand ris');
   });
   it('uses more food for an active day', () => {
-    expect(createMealPlan({ ...initialAnswers, activity: 'high' })[2]?.portions[1]).toBe('2 kupade händer ris');
+    expect(createMealPlan({ ...initialAnswers, activity: 'high' }).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
   });
   it('uses hand measures instead of calorie or macro data', () => {
     const meals = createMealPlan(initialAnswers);
-    expect(meals[2]?.portions[0]).toBe('1 handflata linser');
+    expect(meals.find(m => m.slot === "lunch")?.portions[0]).toBe('1 handflata linser');
     expect(JSON.stringify(meals)).not.toMatch(/kcal|calories|macros/i);
   });
   it('does not remind about a meal already eaten', () => {
@@ -46,11 +49,11 @@ describe('Meal suggestions', () => {
     expect(dueReminders(meals,new Set(),first.offset-20,15)).toHaveLength(0);
   });
   it('suggests more food on a hard training day', () => {
-    expect(createMealPlan(initialAnswers, {}, 2)[2]?.portions[1]).toBe('2 kupade händer ris');
-    expect(createMealPlan(initialAnswers, {}, 1)[3]?.portions).toContain('Träningsdag: + 1 extra frukt');
+    expect(createMealPlan(initialAnswers, {}, 2).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
+    expect(createMealPlan(initialAnswers, {}, 1).find(m => m.slot === "snack2")?.portions).toContain('Träningsdag: + 1 extra frukt');
   });
   it('suggests more food for a larger body', () => {
-    expect(createMealPlan({ ...initialAnswers, weight_kg: 95, height_cm: 180 })[2]?.portions[1]).toBe('2 kupade händer ris');
+    expect(createMealPlan({ ...initialAnswers, weight_kg: 95, height_cm: 180 }).find(m => m.slot === "lunch")?.portions[1]).toBe('2 kupade händer ris');
   });
   it('offers several dishes to choose between for every meal', () => {
     const options = dishOptions(initialAnswers);
