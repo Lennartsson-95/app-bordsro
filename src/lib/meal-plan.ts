@@ -10,7 +10,7 @@ export function clock(total: number) { const normalized = ((Math.round(total) % 
 export type Meal = { slot: MealSlot; label: string; time: string; offset: number; title: string; ingredients: string; portions: string[]; image: 'breakfast' | 'lunch' | null };
 export type MealEntry = { slot: string; choice: number; eaten: boolean; custom_title: string | null; custom_time: string | null };
 export const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Välj en giltig tid.');
-export const mealEditSchema = z.object({ day: daySchema, slot: slotSchema, custom_title: z.string().trim().max(160, 'Använd högst 160 tecken.').nullable(), custom_time: timeSchema.nullable() });
+export const mealEditSchema = z.object({ day: daySchema, slot: slotSchema, custom_title: z.string().trim().max(160, 'Använd högst 160 tecken.').nullable(), custom_time: timeSchema.nullable(), choice: z.number().int().min(0).max(9).optional() });
 export function weekDays(day: string) {
   const date = new Date(`${day}T12:00:00`);
   date.setDate(date.getDate() - (date.getDay() + 6) % 7);
@@ -28,6 +28,38 @@ export function carbPortion(profile: ProfileAnswers, training: Training = 0) { r
 function trainingExtra(slot: MealSlot, training: Training) {
   if (slot !== 'snack2' || !training) return [];
   return [training === 2 ? 'Träningsdag: + 1 extra smörgås och 1 glas mjölk eller växtdryck' : 'Träningsdag: + 1 extra frukt'];
+}
+export type Dish = { title: string; ingredients: string; image: Meal['image']; proteinPart?: string; carbPart?: string; portions?: string[] };
+/** The dishes the user can choose between for each meal slot, adapted to diet. */
+export function dishOptions(profile: ProfileAnswers): Record<MealSlot, Dish[]> {
+  const vegan = profile.diet === 'vegan';
+  const protein = profile.diet === 'mixed' ? 'kyckling' : profile.diet === 'pescatarian' ? 'fisk' : 'bönor';
+  const drink = vegan ? 'berikad växtdryck' : 'mjölk eller växtdryck';
+  const snacks: Dish[] = [
+    { title: 'Frukt & smörgås', ingredients: `Frukt, bröd, ${vegan ? 'bönröra' : 'ost eller bönröra'}`, image: null },
+    { title: 'Frukt & havregröt', ingredients: `Frukt, havre, ${drink}`, image: null, portions: ['1 frukt + 1 liten skål havregröt'] },
+    { title: 'Smoothie med frukt & bär', ingredients: `Frukt, bär, ${drink}`, image: null },
+  ];
+  return {
+    breakfast: [
+      { title: 'Havregröt med banan & bär', ingredients: `Havre, banan, bär, ${drink}`, image: 'breakfast' },
+      { title: vegan ? 'Växtyoghurt med frukt' : 'Yoghurt med frukt', ingredients: `${vegan ? 'Berikad växtyoghurt' : 'Yoghurt'}, havreflingor, frukt`, image: null },
+      { title: 'Smörgåsar med pålägg', ingredients: `Bröd, ${vegan ? 'bönröra' : 'ost eller bönröra'}, paprika eller gurka`, image: null },
+    ],
+    snack1: snacks,
+    lunch: [
+      { title: 'Linsgryta med ris & sallad', ingredients: 'Linser, ris, morot, zucchini, tomat, sallad, olja', image: 'lunch', proteinPart: 'linser', carbPart: 'ris' },
+      { title: `Ris med ${protein} & grönsaker`, ingredients: `Ris, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'ris' },
+      { title: `Pastasallad med ${protein}`, ingredients: `Pasta, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'pasta' },
+    ],
+    snack2: snacks,
+    dinner: [
+      { title: `Ugnspotatis med ${protein} & grönsaker`, ingredients: `Potatis, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'potatis' },
+      { title: `Grönsaksris med ${protein}`, ingredients: `Ris, ${protein}, grönsaker, olja`, image: null, proteinPart: protein, carbPart: 'ris' },
+      { title: `Gryta med ${protein} & potatis`, ingredients: `${protein}, potatis, rotfrukter, tomat`, image: null, proteinPart: protein, carbPart: 'potatis' },
+    ],
+    evening: snacks,
+  };
 }
 export function plannedMeals(profile: ProfileAnswers, entries: MealEntry[], training: Training = 0): Meal[] {
   return createMealPlan(profile, Object.fromEntries(entries.map(entry => [entry.slot, entry.choice])), training).map(meal => {
@@ -52,24 +84,25 @@ export function createMealPlan(profile: ProfileAnswers, choices: Partial<Record<
   if (end <= start) end += 1440;
   const extra = profile.goal === 'gain';
   const slots: MealSlot[] = extra ? ['breakfast','snack1','lunch','snack2','dinner','evening'] : ['breakfast','snack1','lunch','snack2','dinner'];
-  const vegan = profile.diet === 'vegan';
-  const protein = profile.diet === 'mixed' ? 'kyckling' : profile.diet === 'pescatarian' ? 'fisk' : 'bönor';
+  const options = dishOptions(profile);
   return slots.map((slot, index) => {
-    const alt = choices[slot] === 1;
+    const dishes = options[slot];
+    const dish = dishes[Math.min(Math.max(choices[slot] ?? 0, 0), dishes.length - 1)]!;
     const offset = Math.round((start + ((end-start)*index/(slots.length-1))) / 5) * 5;
     const main = slot === 'lunch' || slot === 'dinner';
     const carb = carbPortion(profile, training);
-    const portions = main ? [`1 handflata ${slot === 'lunch' && !alt ? 'linser' : protein}`, `${carb} ${slot === 'dinner' && !alt ? 'potatis' : 'ris'}`, '2 nävar grönsaker', '1 tumme olja eller annat matfett'] : slot === 'breakfast' ? [extra ? '1 rejäl skål + 1 smörgås' : '1 skål', '1 näve frukt eller bär', vegan ? '1 glas berikad växtdryck' : '1 glas mjölk eller berikad växtdryck'] : [extra ? '1 frukt + 2 smörgåsar med pålägg' : '1 frukt + 1 smörgås med pålägg'];
+    let portions = main
+      ? [`1 handflata ${dish.proteinPart ?? 'protein'}`, `${carb} ${dish.carbPart ?? 'ris'}`, '2 nävar grönsaker', '1 tumme olja eller annat matfett']
+      : slot === 'breakfast'
+        ? [extra ? '1 rejäl skål + 1 smörgås' : '1 skål', '1 näve frukt eller bär', `1 glas ${veganDrink(profile)}`]
+        : [extra ? '1 frukt + 2 smörgåsar med pålägg' : '1 frukt + 1 smörgås med pålägg'];
+    if (dish.portions) portions = [...dish.portions];
     const label = { breakfast:'Frukost', snack1:'Förmiddagsmål', lunch:'Lunch', snack2:'Mellanmål', dinner:'Middag', evening:'Kvällsmål' }[slot];
-    let title = '', ingredients = '', image: Meal['image'] = null;
-    if (slot === 'breakfast') { title = alt ? (vegan ? 'Växtyoghurt med frukt' : 'Yoghurt med frukt') : 'Havregröt med banan & bär'; ingredients = alt ? `${vegan ? 'Berikad växtyoghurt' : 'Yoghurt'}, havreflingor, frukt` : `Havre, banan, bär, ${vegan ? 'berikad växtdryck' : 'mjölk eller växtdryck'}`; if (!alt) image = 'breakfast'; }
-    else if (slot === 'lunch') { title = alt ? `Ris med ${protein} & grönsaker` : 'Linsgryta med ris & sallad'; ingredients = alt ? `Ris, ${protein}, grönsaker, olja` : 'Linser, ris, morot, zucchini, tomat, sallad, olja'; if (!alt) image = 'lunch'; }
-    else if (slot === 'dinner') { title = alt ? `Grönsaksris med ${protein}` : `Ugnspotatis med ${protein} & grönsaker`; ingredients = `${alt ? 'Ris' : 'Potatis'}, ${protein}, grönsaker, olja`; }
-    else { title = alt ? 'Frukt & havregröt' : 'Frukt & smörgås'; ingredients = alt ? `Frukt, havre, ${vegan ? 'berikad växtdryck' : 'mjölk eller växtdryck'}` : `Frukt, bröd, ${vegan ? 'bönröra' : 'ost eller bönröra'}`; if (alt) portions.splice(0, portions.length, '1 frukt + 1 liten skål havregröt'); }
     portions.push(...trainingExtra(slot, training));
-    return { slot, label, time: clock(offset), offset, title, ingredients, portions, image };
+    return { slot, label, time: clock(offset), offset, title: dish.title, ingredients: dish.ingredients, portions, image: dish.image };
   });
 }
+function veganDrink(profile: ProfileAnswers) { return profile.diet === 'vegan' ? 'berikad växtdryck' : 'mjölk eller berikad växtdryck'; }
 export function dueReminders(meals: Meal[], eaten: Set<MealSlot>, nowMinutes: number, lead: number) {
   return meals.filter(meal => !eaten.has(meal.slot) && nowMinutes >= meal.offset - lead && nowMinutes < meal.offset - lead + 2);
 }
