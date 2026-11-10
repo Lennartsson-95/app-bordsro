@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { editMeal, updateMeal } from '@/lib/today.functions';
-import { mealEditSchema, plannedMeals, type Meal, type MealEntry } from '@/lib/meal-plan';
+import { dishOptions, mealEditSchema, plannedMeals, type Meal, type MealEntry } from '@/lib/meal-plan';
 import type { ProfileAnswers } from '@/lib/profile-schema';
 import breakfastImage from '@/assets/frukost-havre.jpg';
 import lunchImage from '@/assets/lunch-linser.jpg';
