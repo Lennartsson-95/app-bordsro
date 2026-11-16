@@ -23,6 +23,7 @@ export type Database = {
           custom_title: string | null
           day: string
           eaten: boolean
+          image_key: string | null
           slot: string
           user_id: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           custom_title?: string | null
           day: string
           eaten?: boolean
+          image_key?: string | null
           slot: string
           user_id: string
         }
@@ -45,6 +47,7 @@ export type Database = {
           custom_title?: string | null
           day?: string
           eaten?: boolean
+          image_key?: string | null
           slot?: string
           user_id?: string
         }

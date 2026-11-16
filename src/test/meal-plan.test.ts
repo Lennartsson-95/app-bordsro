@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { createMealPlan, dishOptions, dueReminders, localDay, plannedMeals, prepareOwnItem, weekDays, mealEditSchema, proteinGroups } from '@/lib/meal-plan';
 import { initialAnswers } from '@/lib/profile-schema';
 describe('Meal suggestions', () => {
+  it('accepts food and drink image choices independently of food and rejects unknown images', () => {
+    const input = { day: '2026-11-16', slot: 'lunch', custom_title: 'Pasta', custom_time: '12:00' };
+    expect(mealEditSchema.parse({ ...input, image_key: 'food-25' }).image_key).toBe('food-25');
+    expect(mealEditSchema.parse({ ...input, image_key: 'drink-11' }).image_key).toBe('drink-11');
+    expect(mealEditSchema.parse({ ...input, image_key: null }).image_key).toBeNull();
+    expect(mealEditSchema.safeParse({ ...input, image_key: 'food-31' }).success).toBe(false);
+    expect(mealEditSchema.safeParse({ ...input, image_key: 'drink-13' }).success).toBe(false);
+  });
   it('a newly added meal has no food chosen until the user picks one', () => {
     const [meal] = plannedMeals(initialAnswers, [{ slot: 'lunch', choice: 0, eaten: false, custom_title: null, custom_time: null, added: true, chosen: false }]);
     expect(meal?.title).toBe('Välj mat');

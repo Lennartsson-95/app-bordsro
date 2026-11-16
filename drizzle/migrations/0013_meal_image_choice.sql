@@ -1,0 +1,2 @@
+ALTER TABLE public.daily_meals ADD COLUMN image_key text;
+ALTER TABLE public.daily_meals ADD CONSTRAINT daily_meals_image_key_check CHECK (image_key IS NULL OR image_key ~ '^(food-([1-9]|[12][0-9]|30)|drink-([1-9]|1[0-2]))$');

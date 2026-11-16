@@ -39,3 +39,4 @@ use the editor.
 - Select appetite tips in a pure meal-slot module with date-based rotation; scheduled and test reminders must use the same selection.
 - Keep optional own-item shopping quantities separate from item names and validate them through a shared schema; quantities must not change deduplication or check-off identity.
 - Keep age and sex as optional profile fields that only nudge the portion level, and count sex only while no body measurements are given; this keeps suggestions explainable without calorie counting.
+- Store optional image keys per user/date/meal through the shared authenticated meal editor; resolve them from a browser-safe CDN catalog and validate keys separately so image choices never affect food or portions.

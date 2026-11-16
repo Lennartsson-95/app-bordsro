@@ -31,3 +31,7 @@
 # Ålder och kön
 - [x] Valfria frågor om ålder i år och kön med fyra alternativ, i onboarding och Min profil.
 - [x] Ålder och kön justerar mängden mat som ett litet tillskott, kontrollerat med tester och i appen.
+
+# Bilder till måltider
+- [x] Dela upp uppladdade mat- och dryckbilder till valbara bilder.
+- [x] Spara bildval per måltid och dag samt kontrollera på mobil och dator.

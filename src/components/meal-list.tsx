@@ -10,12 +10,15 @@ import { createMealPlan, dishOptions, mealEditSchema, plannedMeals, proteinGroup
 import type { ProfileAnswers } from '@/lib/profile-schema';
 import breakfastImage from '@/assets/frukost-havre.jpg';
 import lunchImage from '@/assets/lunch-linser.jpg';
+import { MealImagePicker } from '@/components/meal-image-picker';
+import { getMealImage } from '@/lib/meal-images';
 
 export function MealList({ day, meals, entries, profile, compact = false, training = 0 }: { day: string; meals: Meal[]; entries: MealEntry[]; profile: ProfileAnswers; compact?: boolean; training?: 0 | 1 | 2 }) {
   const [selected, setSelected] = useState<Meal | null>(null);
   const [title, setTitle] = useState('');
   const [time, setTime] = useState('');
   const [choice, setChoice] = useState(0);
+  const [imageKey, setImageKey] = useState<string | null>(null);
   const [protein, setProtein] = useState<ProteinCategory | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -36,17 +39,17 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   const preview = selected ? plannedMeals(profile, [...entries.filter(e => e.slot !== selected.slot), { slot: selected.slot, choice: entries.find(e => e.slot === selected.slot)?.choice ?? 0, eaten: false, custom_title: title.trim() || null, custom_time: null }], training).find(m => m.slot === selected.slot) : null;
   async function refresh() { await Promise.all([queryClient.invalidateQueries({ queryKey: ['today'] }), queryClient.invalidateQueries({ queryKey: ['week'] })]); }
   const returnFocus = useRef<HTMLElement | null>(null);
-  function open(meal: Meal) { returnFocus.current = document.activeElement as HTMLElement | null; setSelected(meal); const entry = entries.find(e => e.slot === meal.slot); setTitle(entry?.custom_title ?? ''); setTime(meal.time); setChoice(entry?.choice ?? 0); setProtein(null); setError(''); }
+  function open(meal: Meal) { returnFocus.current = document.activeElement as HTMLElement | null; setSelected(meal); const entry = entries.find(e => e.slot === meal.slot); setTitle(entry?.custom_title ?? ''); setTime(meal.time); setChoice(entry?.choice ?? 0); setImageKey(entry?.image_key ?? null); setProtein(null); setError(''); }
   async function choose(index: number) {
     if (!selected) return;
     setChoice(index); setTitle(''); setBusy(true); setError('');
-    try { await save({ data: { day, slot: selected.slot, custom_title: null, custom_time: time, choice: index } }); await refresh(); }
+    try { await save({ data: { day, slot: selected.slot, custom_title: null, custom_time: time, choice: index, image_key: imageKey } }); await refresh(); }
     catch (err) { setError(err instanceof Error ? err.message : 'Förslaget kunde inte sparas.'); }
     finally { setBusy(false); }
   }
   async function submit(reset = false) {
     if (!selected) return;
-    const result = mealEditSchema.safeParse({ day, slot: selected.slot, custom_title: reset ? null : title.trim() || null, custom_time: reset ? null : time });
+    const result = mealEditSchema.safeParse({ day, slot: selected.slot, custom_title: reset ? null : title.trim() || null, custom_time: reset ? null : time, image_key: imageKey });
     if (!result.success) { setError(result.error.issues[0]?.message ?? 'Kontrollera måltiden.'); return; }
     setBusy(true); setError('');
     try { await save({ data: result.data }); await refresh(); setSelected(null); }
@@ -64,7 +67,8 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
     {!selected && error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
     <div className={compact ? 'space-y-2' : 'space-y-4'}>{meals.map(meal => {
       const done = entries.some(e => e.slot === meal.slot && e.eaten);
-      const source = meal.image === 'breakfast' ? breakfastImage : meal.image === 'lunch' ? lunchImage : null;
+      const chosenImage = getMealImage(entries.find(e => e.slot === meal.slot)?.image_key);
+      const source = chosenImage?.src ?? (meal.image === 'breakfast' ? breakfastImage : meal.image === 'lunch' ? lunchImage : null);
       return <article key={meal.slot} aria-label={meal.label} className={`overflow-hidden rounded-lg border ${done ? 'border-primary/40 bg-secondary/30' : 'border-border bg-card'}`}>
         <div className="flex items-stretch">
           <Button variant="ghost" className={`h-auto min-w-0 flex-1 justify-start whitespace-normal rounded-none text-left ${compact ? 'gap-3 p-3' : 'gap-4 p-4 sm:p-5'}`} onClick={() => open(meal)} aria-label={`Visa ${meal.label.toLowerCase()}`}>
@@ -83,6 +87,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
         {selected && <><form onSubmit={e => { e.preventDefault(); void submit(); }} className="space-y-4">
           <div><label htmlFor="meal-time" className="mb-2 block text-sm font-medium">Tid för måltiden</label><Input id="meal-time" type="time" required value={time} onChange={e => setTime(e.target.value)} disabled={busy} /></div>
           <div><label htmlFor="meal-food" className="mb-2 block text-sm font-medium">Vad ska du äta?</label><Input id="meal-food" value={title} onChange={e => setTitle(e.target.value)} placeholder={selected.title === 'Välj mat' ? 'Skriv din mat eller välj ett förslag' : selected.title} maxLength={160} disabled={busy} /></div>
+          <MealImagePicker value={imageKey} onChange={setImageKey} disabled={busy} />
           {groups.length > 0 && <section><h3 className="font-display text-lg">Välj proteinkälla</h3><div role="group" aria-label="Proteinkälla" className="mt-3 grid grid-cols-2 gap-2">{groups.map(group => { const Icon = proteinIcons[group.category]; return <Button key={group.category} variant={protein === group.category ? 'secondary' : 'outline'} type="button" disabled={busy} aria-pressed={protein === group.category} onClick={() => setProtein(group.category)} className={`h-11 gap-2 ${protein === group.category ? 'border border-primary' : ''}`}><Icon className="size-4" />{group.label}</Button>; })}</div></section>}
           {suggestions.length > 0 && <section aria-label="Maträttsförslag"><h3 className="font-display text-lg">{groups.length ? 'Välj en maträtt' : 'Välj ett annat förslag'}</h3><div className="mt-3 space-y-2">{suggestions.map(({ dish, choice: index }) => {
             const active = index === choice && !title.trim() && entries.find(e => e.slot === selected.slot)?.chosen !== false;

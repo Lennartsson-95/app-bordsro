@@ -1,0 +1,23 @@
+import { useState } from 'react';
+import { Check, Utensils } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { mealImages } from '@/lib/meal-images';
+
+export function MealImagePicker({ value, onChange, disabled }: { value: string | null; onChange: (key: string | null) => void; disabled: boolean }) {
+  const [category, setCategory] = useState<'food' | 'drink'>(value?.startsWith('drink-') ? 'drink' : 'food');
+  return <section aria-labelledby="meal-image-label">
+    <h3 id="meal-image-label" className="font-display text-lg">Bild till måltiden</h3>
+    <div role="group" aria-label="Bildkategori" className="mt-3 flex flex-wrap gap-2">
+      <Button type="button" size="sm" variant={category === 'food' ? 'secondary' : 'outline'} aria-pressed={category === 'food'} onClick={() => setCategory('food')}>Mat</Button>
+      <Button type="button" size="sm" variant={category === 'drink' ? 'secondary' : 'outline'} aria-pressed={category === 'drink'} onClick={() => setCategory('drink')}>Dryck</Button>
+      <Button type="button" size="sm" variant="ghost" aria-pressed={value === null} disabled={disabled} onClick={() => onChange(null)}><Utensils className="size-4" />Ingen egen bild</Button>
+    </div>
+    <div role="group" aria-label="Välj bild" className="mt-3 grid max-h-64 grid-cols-3 gap-2 overflow-y-auto p-1 sm:grid-cols-4">
+      {mealImages.filter(image => image.category === category).map(image => <Button key={image.key} type="button" variant="outline" disabled={disabled} aria-label={`Välj bild: ${image.label}`} aria-pressed={value === image.key} onClick={() => onChange(image.key)} className={`relative h-auto min-w-0 flex-col gap-1 whitespace-normal p-1.5 ${value === image.key ? 'border-primary bg-secondary' : 'bg-card'}`}>
+        <img src={image.src} alt="" width={96} height={96} loading="lazy" className="aspect-square w-full rounded-sm object-contain" />
+        <span className="flex min-h-8 items-center text-center text-xs leading-4">{image.label}</span>
+        {value === image.key && <span className="absolute right-1 top-1 rounded-full bg-primary p-1 text-primary-foreground"><Check className="size-3" /></span>}
+      </Button>)}
+    </div>
+  </section>;
+}
