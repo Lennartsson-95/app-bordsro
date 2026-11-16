@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Beef, Check, ChevronRight, Clock, Drumstick, Fish, Leaf, RefreshCw, Save, Utensils } from 'lucide-react';
@@ -35,7 +35,8 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   const proteinIcons = { vegetarian: Leaf, fish: Fish, meat: Beef, chicken: Drumstick };
   const preview = selected ? plannedMeals(profile, [...entries.filter(e => e.slot !== selected.slot), { slot: selected.slot, choice: entries.find(e => e.slot === selected.slot)?.choice ?? 0, eaten: false, custom_title: title.trim() || null, custom_time: null }], training).find(m => m.slot === selected.slot) : null;
   async function refresh() { await Promise.all([queryClient.invalidateQueries({ queryKey: ['today'] }), queryClient.invalidateQueries({ queryKey: ['week'] })]); }
-  function open(meal: Meal) { setSelected(meal); const entry = entries.find(e => e.slot === meal.slot); setTitle(entry?.custom_title ?? ''); setTime(meal.time); setChoice(entry?.choice ?? 0); setProtein(null); setError(''); }
+  const returnFocus = useRef<HTMLElement | null>(null);
+  function open(meal: Meal) { returnFocus.current = document.activeElement as HTMLElement | null; setSelected(meal); const entry = entries.find(e => e.slot === meal.slot); setTitle(entry?.custom_title ?? ''); setTime(meal.time); setChoice(entry?.choice ?? 0); setProtein(null); setError(''); }
   async function choose(index: number) {
     if (!selected) return;
     setChoice(index); setTitle(''); setBusy(true); setError('');
@@ -77,7 +78,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
     {meals.length === 0 && <p className="text-sm text-muted-foreground">Inga måltider tillagda än.</p>}
     {available.length > 0 && <div role="group" aria-label="Lägg till måltid" className="mt-3 flex flex-wrap gap-2">{available.map(m => <Button key={m.slot} size="sm" variant="outline" disabled={busy} onClick={() => setSlot(m.slot, true)} aria-label={`Lägg till ${m.label.toLowerCase()}`}><Plus />{m.label}</Button>)}</div>}
     <Dialog open={selected !== null} onOpenChange={v => { if (!v && !busy) setSelected(null); }}>
-      <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg">
+      <DialogContent onCloseAutoFocus={e => { const el = returnFocus.current; if (el?.isConnected) { e.preventDefault(); el.focus(); } }} className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg">
         <DialogHeader><DialogTitle className="pr-6 font-display text-2xl">{selected?.label}</DialogTitle><DialogDescription>{new Date(`${day}T12:00:00`).toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })}</DialogDescription></DialogHeader>
         {selected && <><form onSubmit={e => { e.preventDefault(); void submit(); }} className="space-y-4">
           <div><label htmlFor="meal-time" className="mb-2 block text-sm font-medium">Tid för måltiden</label><Input id="meal-time" type="time" required value={time} onChange={e => setTime(e.target.value)} disabled={busy} /></div>
