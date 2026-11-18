@@ -74,27 +74,32 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/*
+ * Palette "Salvia & grädde" — fastställd av Åsa:
+ * #FDFAF6 yta, #f5f0e8 bakgrund, #dce5d4 mjuk bakgrund, #a8c0a0 kant/accent,
+ * #4c6a46 primär knapgrön, #2e392e och #0F100F mörk text på ljus botten.
+ */
 :root {
   --radius: 0.5rem;
-  --background: oklch(0.956 0.012 80);
-  --foreground: oklch(0.33 0.025 145);
-  --card: oklch(0.987 0.006 80);
-  --card-foreground: oklch(0.33 0.025 145);
-  --popover: oklch(0.987 0.006 80);
-  --popover-foreground: oklch(0.33 0.025 145);
-  --primary: oklch(0.49 0.066 140);
-  --primary-foreground: oklch(0.987 0.006 80);
-  --secondary: oklch(0.909 0.026 130);
-  --secondary-foreground: oklch(0.33 0.025 145);
-  --muted: oklch(0.909 0.026 130);
-  --muted-foreground: oklch(0.48 0.025 140);
-  --accent: oklch(0.909 0.026 130);
-  --accent-foreground: oklch(0.33 0.025 145);
+  --background: oklch(0.9568 0.0119 79.78);              /* #f5f0e8 */
+  --foreground: oklch(0.1715 0.0026 145.46);             /* #0F100F */
+  --card: oklch(0.9863 0.0062 75.41);                    /* #FDFAF6 */
+  --card-foreground: oklch(0.1715 0.0026 145.46);        /* #0F100F */
+  --popover: oklch(0.9863 0.0062 75.41);                 /* #FDFAF6 */
+  --popover-foreground: oklch(0.1715 0.0026 145.46);     /* #0F100F */
+  --primary: oklch(0.4906 0.0661 140.35);                /* #4c6a46 */
+  --primary-foreground: oklch(0.9863 0.0062 75.41);      /* #FDFAF6 */
+  --secondary: oklch(0.9104 0.0247 129.91);              /* #dce5d4 */
+  --secondary-foreground: oklch(0.3307 0.0241 145.01);   /* #2e392e */
+  --muted: oklch(0.9104 0.0247 129.91);                  /* #dce5d4 */
+  --muted-foreground: oklch(0.3307 0.0241 145.01);       /* #2e392e */
+  --accent: oklch(0.7809 0.0517 137.88);                 /* #a8c0a0 */
+  --accent-foreground: oklch(0.1715 0.0026 145.46);      /* #0F100F */
   --destructive: oklch(0.5 0.2 27);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.85 0.023 130);
-  --input: oklch(0.76 0.03 140);
-  --ring: oklch(0.65 0.065 140);
+  --border: oklch(0.7809 0.0517 137.88);                 /* #a8c0a0 */
+  --input: oklch(0.4906 0.0661 140.35);                  /* #4c6a46 */
+  --ring: oklch(0.4906 0.0661 140.35);                   /* #4c6a46 */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);

@@ -75,7 +75,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
             {!compact && (source ? <img src={source} alt="" width="72" height="72" className="size-16 shrink-0 rounded-md object-cover sm:size-20" /> : <span className="flex size-16 shrink-0 items-center justify-center rounded-md bg-secondary sm:size-20"><Utensils className="size-6 text-primary" /></span>)}
             <span className="min-w-0 flex-1"><span className="mb-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground"><Clock className="size-3" />{meal.time} · {meal.label}</span><span className={`block break-words font-display ${compact ? 'text-sm' : 'text-lg'}`}>{meal.title}</span>{done && <span className="mt-1 block text-xs text-primary">Uppäten</span>}</span><ChevronRight className="size-4 shrink-0 text-primary" />
           </Button>
-          {!compact && <Button size="icon" variant={done ? 'secondary' : 'ghost'} disabled={busy} className="my-auto mr-3 shrink-0" title={done ? 'Ångra uppäten' : 'Jag har ätit'} aria-label={done ? `Ångra uppäten ${meal.label.toLowerCase()}` : `Markera ${meal.label.toLowerCase()} som uppäten`} onClick={() => toggle(meal)}><Check /></Button>}
+          {!compact && <Button size="icon" variant={done ? 'default' : 'outline'} disabled={busy} className={`my-auto mr-3 shrink-0 ${done ? '' : 'border-primary text-primary'}`} title={done ? 'Ångra uppäten' : 'Jag har ätit'} aria-label={done ? `Ångra uppäten ${meal.label.toLowerCase()}` : `Markera ${meal.label.toLowerCase()} som uppäten`} onClick={() => toggle(meal)}><Check /></Button>}
         </div>
       </article>;
     })}</div>
