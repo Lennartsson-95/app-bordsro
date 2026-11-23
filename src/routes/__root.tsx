@@ -13,7 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AccountProvider } from '@/components/auth-state';
-import { BordsroHeader } from '@/components/bordsro-header';
+import { BordsroHeader, MobileNavSpacer } from '@/components/bordsro-header';
 
 function NotFoundComponent() {
   return (
@@ -136,6 +136,7 @@ function RootComponent() {
       <AccountProvider>
         <BordsroHeader />
         <Outlet />
+        <MobileNavSpacer />
       </AccountProvider>
     </QueryClientProvider>
   );
