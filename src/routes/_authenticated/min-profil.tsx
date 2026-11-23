@@ -1,8 +1,9 @@
 import { useEffect, useState, Suspense } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useSuspenseQuery, queryOptions, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
-import { Check, Pencil, Leaf } from 'lucide-react';
+import { Check, LogOut, Pencil, Leaf } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { getProfile, saveProfile } from '@/lib/profile.functions';
 import { pageHead } from '@/lib/page-head';
 import { goalChoices, profileSchema, initialAnswers, sexChoices, type ProfileAnswers } from '@/lib/profile-schema';
@@ -20,6 +21,13 @@ function ProfileContent() {
   const { data } = useSuspenseQuery(profileQuery);
   const save = useServerFn(saveProfile);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  async function signOut() {
+    await queryClient.cancelQueries(); queryClient.clear();
+    const { error } = await supabase.auth.signOut();
+    if (error) return;
+    await navigate({ to: '/auth', replace: true });
+  }
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState<ProfileAnswers | null>(null);
   const [saved, setSaved] = useState(false);
@@ -40,5 +48,5 @@ function ProfileContent() {
   const goal = goalChoices.find(g => g.value === data.goal);
   const dietLabel = { mixed: 'Jag äter det mesta', vegetarian: 'Vegetariskt', vegan: 'Veganskt', pescatarian: 'Vegetariskt & fisk' }[data.diet as ProfileAnswers['diet']];
   const sexLabel = sexChoices.find(s => s.value === data.sex)?.label ?? 'Inte angivet';
-  return <main className="mx-auto max-w-3xl px-6 py-12"><p className="mb-3 flex items-center gap-2 text-sm text-primary"><Leaf className="size-4" />Din egen måltidsrytm</p><h1 className="font-display text-4xl">Välkommen, {data.display_name}</h1><p className="mt-4 text-muted-foreground">{saved ? 'Dina ändringar är sparade.' : 'Ditt mål och dina svar är sparade.'}</p><section className="mt-10 border-y border-border py-7"><div className="flex items-center justify-between gap-4"><h2 className="font-display text-2xl">{goal?.title}</h2><Check className="text-primary" /></div><dl className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2"><div><dt className="text-sm text-muted-foreground">Matvanor</dt><dd className="mt-1">{dietLabel}</dd></div><div><dt className="text-sm text-muted-foreground">Allergier och sådant du undviker</dt><dd className="mt-1 break-words">{data.allergies || 'Inget angivet'}</dd></div><div><dt className="text-sm text-muted-foreground">Rörelse</dt><dd className="mt-1">{data.activity === 'low' ? 'Lite rörelse' : data.activity === 'high' ? 'Mycket rörelse' : 'En del rörelse'}</dd></div><div><dt className="text-sm text-muted-foreground">Längd, vikt och målvikt</dt><dd className="mt-1">{data.height_cm ? `${data.height_cm} cm` : '–'} · {data.weight_kg ? `${data.weight_kg} kg` : '–'} · mål {data.target_weight_kg ? `${data.target_weight_kg} kg` : '–'}</dd></div><div><dt className="text-sm text-muted-foreground">Ålder och kön</dt><dd className="mt-1">{data.age ? `${data.age} år` : '–'} · {sexLabel}</dd></div><div><dt className="text-sm text-muted-foreground">Din dag</dt><dd className="mt-1">Vaknar {data.wake_time} · Lägger dig {data.sleep_time}</dd></div></dl></section><Button className="mt-7 h-11" onClick={() => setEditing(true)}><Pencil />Ändra mina svar</Button></main>;
+  return <main className="mx-auto max-w-3xl px-6 py-12"><p className="mb-3 flex items-center gap-2 text-sm text-primary"><Leaf className="size-4" />Din egen måltidsrytm</p><h1 className="font-display text-4xl">Välkommen, {data.display_name}</h1><p className="mt-4 text-muted-foreground">{saved ? 'Dina ändringar är sparade.' : 'Ditt mål och dina svar är sparade.'}</p><section className="mt-10 border-y border-border py-7"><div className="flex items-center justify-between gap-4"><h2 className="font-display text-2xl">{goal?.title}</h2><Check className="text-primary" /></div><dl className="mt-7 grid grid-cols-1 gap-6 sm:grid-cols-2"><div><dt className="text-sm text-muted-foreground">Matvanor</dt><dd className="mt-1">{dietLabel}</dd></div><div><dt className="text-sm text-muted-foreground">Allergier och sådant du undviker</dt><dd className="mt-1 break-words">{data.allergies || 'Inget angivet'}</dd></div><div><dt className="text-sm text-muted-foreground">Rörelse</dt><dd className="mt-1">{data.activity === 'low' ? 'Lite rörelse' : data.activity === 'high' ? 'Mycket rörelse' : 'En del rörelse'}</dd></div><div><dt className="text-sm text-muted-foreground">Längd, vikt och målvikt</dt><dd className="mt-1">{data.height_cm ? `${data.height_cm} cm` : '–'} · {data.weight_kg ? `${data.weight_kg} kg` : '–'} · mål {data.target_weight_kg ? `${data.target_weight_kg} kg` : '–'}</dd></div><div><dt className="text-sm text-muted-foreground">Ålder och kön</dt><dd className="mt-1">{data.age ? `${data.age} år` : '–'} · {sexLabel}</dd></div><div><dt className="text-sm text-muted-foreground">Din dag</dt><dd className="mt-1">Vaknar {data.wake_time} · Lägger dig {data.sleep_time}</dd></div></dl></section><Button className="mt-7 h-11" onClick={() => setEditing(true)}><Pencil />Ändra mina svar</Button><Button variant="outline" className="mt-3 h-11 w-full border-border bg-transparent text-foreground hover:bg-accent md:hidden" onClick={signOut}><LogOut />Logga ut</Button></main>;
 }

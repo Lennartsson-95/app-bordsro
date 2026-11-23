@@ -48,10 +48,6 @@ export function BordsroHeader() {
               <span className="truncate">{label}</span>
             </Link>;
           })}
-          <button type="button" onClick={signOut} aria-label="Logga ut" className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-md px-1 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <LogOut className="size-5" aria-hidden="true" />
-            <span className="truncate">Logga ut</span>
-          </button>
         </div>
       </nav>
     </>}
