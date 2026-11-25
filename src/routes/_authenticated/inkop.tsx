@@ -10,10 +10,11 @@ import { localDay, plannedMeals, prepareOwnItem, shiftDay, shoppingList, weekDay
 import { profileSchema } from '@/lib/profile-schema';
 import { pageHead } from '@/lib/page-head';
 import { ownShoppingItemSchema, type OwnShoppingItem } from '@/lib/shopping-schema';
+import { guestToday, isGuest, GUEST_SAVE_MESSAGE } from '@/lib/guest';
 
-const weekQuery = (start: string, end: string) => queryOptions({ queryKey: ['week', start], queryFn: () => getWeek({ data: { start, end } }) });
-const checksQuery = (week: string) => queryOptions({ queryKey: ['shopping', week], queryFn: () => getShoppingChecks({ data: { week } }) });
-const ownItemsQuery = (week: string) => queryOptions({ queryKey: ['shopping-items', week], queryFn: () => getShoppingItems({ data: { week } }) });
+const weekQuery = (start: string, end: string) => queryOptions({ queryKey: ['week', start], queryFn: () => isGuest() ? guestToday() : getWeek({ data: { start, end } }) });
+const checksQuery = (week: string) => queryOptions({ queryKey: ['shopping', week], queryFn: () => isGuest() ? [] as string[] : getShoppingChecks({ data: { week } }) });
+const ownItemsQuery = (week: string) => queryOptions({ queryKey: ['shopping-items', week], queryFn: () => isGuest() ? [] as OwnShoppingItem[] : getShoppingItems({ data: { week } }) });
 
 export const Route = createFileRoute('/_authenticated/inkop')({
   head: () => pageHead('Inköpslista – Bordsro', 'Alla ingredienser för veckans måltider samlade i en lista du kan bocka av – och egna varor du lägger till själv.'),
@@ -31,8 +32,9 @@ function ShoppingPage() {
   const [draft, setDraft] = useState('');
   const [quantity, setQuantity] = useState('');
   const [note, setNote] = useState('');
+  const guest = isGuest();
   const toggle = useMutation({
-    mutationFn: (v: { item: string; checked: boolean }) => toggleShoppingCheck({ data: { week: first, ...v } }),
+    mutationFn: (v: { item: string; checked: boolean }) => guest ? Promise.reject(new Error(GUEST_SAVE_MESSAGE)) : toggleShoppingCheck({ data: { week: first, ...v } }),
     onMutate: v => qc.setQueryData<string[]>(['shopping', first], old => v.checked ? [...(old ?? []), v.item] : (old ?? []).filter(i => i !== v.item)),
     onSettled: () => qc.invalidateQueries({ queryKey: ['shopping', first] }),
   });
@@ -59,6 +61,7 @@ function ShoppingPage() {
   const bought = all.filter(name => done.has(name)).length;
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (guest) { setNote(GUEST_SAVE_MESSAGE); return; }
     const { item, duplicate } = prepareOwnItem(draft, all);
     if (!item) return;
     if (duplicate) { setNote(`${item} finns redan på listan.`); return; }
@@ -84,6 +87,7 @@ function ShoppingPage() {
     </form>
     {note && <p role="alert" className="mt-2 text-sm text-muted-foreground">{note}</p>}
     {add.isError && <p role="alert" className="mt-2 text-sm text-destructive">Varan kunde inte läggas till. Försök igen.</p>}
+    {toggle.isError && <p role="alert" className="mt-2 text-sm text-destructive">{toggle.error instanceof Error ? toggle.error.message : 'Det gick inte att bocka av varan.'}</p>}
     <ul className="mt-3 divide-y divide-border border-y border-border">{ownItems.map(i => row(i.item, i.quantity || undefined, true))}</ul>
     {ownItems.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Inga egna varor ännu. Skriv in det du behöver ovan.</p>}
   </main>;

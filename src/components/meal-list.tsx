@@ -12,6 +12,7 @@ import breakfastImage from '@/assets/frukost-havre.jpg';
 import lunchImage from '@/assets/lunch-linser.jpg';
 import { MealImagePicker } from '@/components/meal-image-picker';
 import { getMealImage } from '@/lib/meal-images';
+import { isGuest, GUEST_SAVE_MESSAGE } from '@/lib/guest';
 
 export function MealList({ day, meals, entries, profile, compact = false, training = 0 }: { day: string; meals: Meal[]; entries: MealEntry[]; profile: ProfileAnswers; compact?: boolean; training?: 0 | 1 | 2 }) {
   const [selected, setSelected] = useState<Meal | null>(null);
@@ -27,6 +28,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   const setAdded = useServerFn(setMealAdded);
   const available = createMealPlan(profile, {}, training).filter(m => !meals.some(x => x.slot === m.slot));
   async function setSlot(slot: Meal['slot'], added: boolean) {
+    if (isGuest()) { setError(GUEST_SAVE_MESSAGE); return; }
     setBusy(true); setError('');
     try { await setAdded({ data: { day, slot, added } }); await refresh(); if (!added) setSelected(null); }
     catch (err) { setError(err instanceof Error ? err.message : 'Måltiden kunde inte sparas.'); }
@@ -42,6 +44,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   function open(meal: Meal) { returnFocus.current = document.activeElement as HTMLElement | null; setSelected(meal); const entry = entries.find(e => e.slot === meal.slot); setTitle(entry?.custom_title ?? ''); setTime(meal.time); setChoice(entry?.choice ?? 0); setImageKey(entry?.image_key ?? null); setProtein(null); setError(''); }
   async function choose(index: number) {
     if (!selected) return;
+    if (isGuest()) { setError(GUEST_SAVE_MESSAGE); return; }
     setChoice(index); setTitle(''); setBusy(true); setError('');
     try { await save({ data: { day, slot: selected.slot, custom_title: null, custom_time: time, choice: index, image_key: imageKey } }); await refresh(); }
     catch (err) { setError(err instanceof Error ? err.message : 'Förslaget kunde inte sparas.'); }
@@ -49,6 +52,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
   }
   async function submit(reset = false) {
     if (!selected) return;
+    if (isGuest()) { setError(GUEST_SAVE_MESSAGE); return; }
     const result = mealEditSchema.safeParse({ day, slot: selected.slot, custom_title: reset ? null : title.trim() || null, custom_time: reset ? null : time, image_key: imageKey });
     if (!result.success) { setError(result.error.issues[0]?.message ?? 'Kontrollera måltiden.'); return; }
     setBusy(true); setError('');
@@ -57,6 +61,7 @@ export function MealList({ day, meals, entries, profile, compact = false, traini
     finally { setBusy(false); }
   }
   async function toggle(meal: Meal) {
+    if (isGuest()) { setError(GUEST_SAVE_MESSAGE); return; }
     const entry = entries.find(e => e.slot === meal.slot);
     setBusy(true); setError('');
     try { await mark({ data: { day, slot: meal.slot, eaten: !entry?.eaten, choice: entry?.choice ?? 0 } }); await refresh(); }

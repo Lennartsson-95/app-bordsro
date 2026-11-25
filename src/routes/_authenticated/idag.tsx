@@ -13,8 +13,9 @@ import { profileSchema, trainingLevel } from '@/lib/profile-schema';
 import { MealList } from '@/components/meal-list';
 import { WorkoutPanel } from '@/components/workout-panel';
 import { appetiteTip } from '@/lib/appetite-tips';
+import { guestToday, isGuest, GUEST_SAVE_MESSAGE } from '@/lib/guest';
 
-const todayQuery = (day: string) => queryOptions({ queryKey: ['today',day], queryFn: () => getToday({ data: { day } }) });
+const todayQuery = (day: string) => queryOptions({ queryKey: ['today',day], queryFn: () => isGuest() ? guestToday() : getToday({ data: { day } }) });
 export const Route = createFileRoute('/_authenticated/idag')({
   head: () => pageHead('Idag – Bordsro', 'Dagens måltider, portionsförslag i handmått och dina måltidspåminnelser.'),
   loader: ({ context }) => context.queryClient.ensureQueryData(todayQuery(localDay(new Date()))),
@@ -47,6 +48,7 @@ function TodayPage() {
     }
   }, [now, day, data.profile.reminders_enabled, data.profile.reminder_lead, data.profile.wake_time, data.profile.sleep_time, meals, eaten]);
   async function settings(enabled: boolean, lead: 0 | 5 | 15) {
+    if (isGuest()) { setError(GUEST_SAVE_MESSAGE); return; }
     setError(''); setBusy('settings');
     try { await saveReminders({ data:{ enabled,lead } }); await queryClient.invalidateQueries({ queryKey:['today'] }); }
     catch (err) { setError(err instanceof Error ? err.message : 'Inställningen kunde inte sparas.'); }

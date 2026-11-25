@@ -8,8 +8,9 @@ import { getWeek } from '@/lib/today.functions';
 import { localDay, plannedMeals, shiftDay, weekDays } from '@/lib/meal-plan';
 import { profileSchema, trainingLevel } from '@/lib/profile-schema';
 import { pageHead } from '@/lib/page-head';
+import { guestToday, isGuest } from '@/lib/guest';
 
-const weekQuery = (day: string) => { const days = weekDays(day); return queryOptions({ queryKey: ['week', days[0]], queryFn: () => getWeek({ data: { start: days[0] ?? day, end: days[6] ?? day } }) }); };
+const weekQuery = (day: string) => { const days = weekDays(day); return queryOptions({ queryKey: ['week', days[0]], queryFn: () => isGuest() ? guestToday() : getWeek({ data: { start: days[0] ?? day, end: days[6] ?? day } }) }); };
 export const Route = createFileRoute('/_authenticated/vecka')({
   head: () => pageHead('Veckoplan – Bordsro', 'Planera veckans måltider med egna maträtter, personliga tider och portionsförslag utan kalorier.'),
   loader: ({ context }) => context.queryClient.ensureQueryData(weekQuery(localDay(new Date()))),

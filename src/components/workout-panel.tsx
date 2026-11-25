@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { addWorkout, deleteWorkout } from '@/lib/today.functions';
 import { workoutSchema } from '@/lib/profile-schema';
+import { isGuest, GUEST_SAVE_MESSAGE } from '@/lib/guest';
 
 type Workout = { id: string; kind: string; minutes: number; intensity: string };
 export function WorkoutPanel({ day, workouts }: { day: string; workouts: Workout[] }) {
@@ -18,6 +19,7 @@ export function WorkoutPanel({ day, workouts }: { day: string; workouts: Workout
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   async function run(fn: () => Promise<unknown>) {
+    if (isGuest()) { setError(GUEST_SAVE_MESSAGE); return; }
     setBusy(true); setError('');
     try { await fn(); await Promise.all([queryClient.invalidateQueries({ queryKey: ['today'] }), queryClient.invalidateQueries({ queryKey: ['week'] })]); }
     catch (err) { setError(err instanceof Error ? err.message : 'Något gick fel.'); }

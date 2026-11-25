@@ -1,5 +1,5 @@
 import { useEffect, useState, Suspense } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useSuspenseQuery, queryOptions, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { Check, LogOut, Pencil, Leaf } from 'lucide-react';
@@ -9,8 +9,9 @@ import { pageHead } from '@/lib/page-head';
 import { goalChoices, profileSchema, initialAnswers, sexChoices, type ProfileAnswers } from '@/lib/profile-schema';
 import { Onboarding } from '@/components/onboarding';
 import { Button } from '@/components/ui/button';
+import { guestProfile, isGuest, setGuestMode } from '@/lib/guest';
 
-const profileQuery = queryOptions({ queryKey: ['my-profile'], queryFn: () => getProfile() });
+const profileQuery = queryOptions({ queryKey: ['my-profile'], queryFn: () => isGuest() ? guestProfile() : getProfile() });
 export const Route = createFileRoute('/_authenticated/min-profil')({
   head: () => pageHead('Min profil – Bordsro', 'Ditt mål och dina personliga måltidsvanor i Bordsro.'),
   loader: ({ context }) => context.queryClient.ensureQueryData(profileQuery),
@@ -19,6 +20,20 @@ export const Route = createFileRoute('/_authenticated/min-profil')({
 function ProfilePage() { return <Suspense fallback={<p className="p-10 text-center">Hämtar dina svar…</p>}><ProfileContent /></Suspense>; }
 function ProfileContent() {
   const { data } = useSuspenseQuery(profileQuery);
+  if (isGuest()) return <GuestProfile />;
+  return <ProfileView data={data} />;
+}
+function GuestProfile() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  async function leave() {
+    await queryClient.cancelQueries(); queryClient.clear();
+    setGuestMode(false);
+    await navigate({ to: '/auth', replace: true });
+  }
+  return <main className="mx-auto max-w-xl px-6 py-12"><p className="mb-3 flex items-center gap-2 text-sm text-primary"><Leaf className="size-4" />Gästläge</p><h1 className="font-display text-4xl">Välkommen, Gäst</h1><p className="mt-4 text-muted-foreground">Du tittar runt som gäst. Dina val sparas inte – skapa ett konto för att få din egen måltidsrytm, påminnelser och inköpslista.</p><div className="mt-7 flex flex-wrap gap-3"><Button className="h-11" onClick={leave}>Skapa konto eller logga in</Button><Button variant="outline" className="h-11" asChild><Link to="/idag">Fortsätt titta runt</Link></Button></div></main>;
+}
+function ProfileView({ data }: { data: Awaited<ReturnType<typeof getProfile>> }) {
   const save = useServerFn(saveProfile);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
